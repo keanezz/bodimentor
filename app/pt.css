@@ -699,3 +699,38 @@ em.mine { font-style: normal; font-size: 10.5px; font-weight: 800; padding: 2px 
 .spin-sm { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid rgba(3, 19, 26, .25); border-top-color: #03131A; animation: spin .8s linear infinite; display: inline-block; }
 .btn:not(.primary) .spin-sm { border-color: var(--tint-3); border-top-color: var(--ink); }
 .onb-card form > h2 + p { margin: 6px 0 20px; }
+
+/* ---------- tipe set (W/F/D) & timer istirahat ---------- */
+button.sn { border: 0; cursor: pointer; font: inherit; font-size: 13px; font-weight: 800; transition: transform .15s var(--ease); }
+button.sn:active { transform: scale(.9); }
+.sn.w { background: rgba(255, 199, 102, .16) !important; color: var(--amber) !important; }
+.sn.f { background: rgba(255, 123, 123, .16) !important; color: var(--rose) !important; }
+.sn.d { background: rgb(var(--c1) / .18) !important; color: #7FD8F5 !important; }
+.st-list { display: grid; gap: 2px; border-radius: 20px; overflow: hidden; background: var(--tint); box-shadow: var(--spec); }
+.st-opt { display: flex; align-items: center; gap: 14px; padding: 14px 16px; text-align: left; background: transparent; }
+.st-opt + .st-opt { border-top: 1px solid rgba(255, 255, 255, .06); }
+.st-opt.on { background: rgba(255, 255, 255, .06); }
+.st-opt .sn { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; flex: none; font-size: 16px; font-weight: 800; background: var(--tint-2); color: var(--ink); }
+.st-opt span { flex: 1; min-width: 0; }
+.st-opt span b { display: block; font-size: 16px; font-weight: 800; }
+.st-opt span small { display: block; font-size: 13px; color: var(--ink-2); font-weight: 600; line-height: 1.35; margin-top: 2px; }
+.st-opt > .ic { color: var(--green); width: 20px; height: 20px; flex: none; }
+.chips.wrap { flex-wrap: wrap; overflow: visible; }
+.restchip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; margin: 0 0 10px 2px; border-radius: 999px; font-size: 13px; font-weight: 800; color: #9FE4FA; background: rgb(var(--c1) / .13); border: 1px solid rgb(var(--c1) / .3); }
+.restchip .ic { width: 15px; height: 15px; }
+.restchip.off { color: var(--ink-3); background: var(--tint); border-color: var(--stroke); }
+.restbar {
+  position: fixed; z-index: 31; left: 50%; transform: translateX(-50%); bottom: calc(80px + env(safe-area-inset-bottom));
+  width: min(560px, calc(100% - 24px)); display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; border-radius: 22px; overflow: hidden;
+  background: rgba(10, 30, 40, .9); border: 1px solid rgb(var(--c1) / .45); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 18px 40px -16px rgba(0, 0, 0, .9);
+  animation: rbIn .3s var(--ease);
+}
+@keyframes rbIn { from { opacity: 0; transform: translate(-50%, 12px); } }
+.restbar .rb-fill { position: absolute; inset: 0; background: linear-gradient(90deg, rgb(var(--c1) / .32), rgb(var(--c3) / .22)); transform-origin: left; pointer-events: none; }
+.restbar > :not(.rb-fill) { position: relative; }
+.restbar .rb-ic { color: #9FE4FA; display: grid; }
+.restbar .rb-t { flex: 1; min-width: 0; line-height: 1.15; }
+.restbar .rb-t b { display: block; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.restbar .rb-t small { display: block; font-size: 12px; color: var(--ink-2); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.restbar .rb-btn { height: 40px; min-width: 44px; padding: 0 10px; border-radius: 13px; font-size: 14px; font-weight: 800; background: rgba(255, 255, 255, .1); border: 1px solid var(--stroke); }
+.restbar .rb-btn.skip { background: rgba(255, 255, 255, .9); color: #06121A; border-color: transparent; }

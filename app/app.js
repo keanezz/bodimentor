@@ -42,6 +42,7 @@
     cal: '<rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 3v3M16 3v3"/>',
     alert: '<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>',
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4M18.5 5.5 20 4"/>',
     trash: '<path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>',
     edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
     bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
@@ -253,7 +254,6 @@
         <div class="field"><label>No. WhatsApp <small>tampil di laporan klien</small></label><input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0812xxxxxxx"></div>
         <div class="field"><label>Email</label><input name="email" type="email" inputmode="email" autocomplete="email" required placeholder="nama@email.com"></div>
         ${pwField('password', 'Buat password', 'new-password', 'minimal 8 karakter')}
-        <label class="check"><input type="checkbox" name="demo" checked>Isi contoh klien biar bisa langsung coba</label>
         <div id="authErr"></div>
         <button class="btn primary lg block" type="submit">Buat akun & mulai trial</button>
         <p class="fine">Setelah ${PT.CONFIG.trialDays} hari, lanjut ${rp(PT.CONFIG.plans[0].price)}/bulan. Bisa berhenti kapan aja.</p>
@@ -268,7 +268,7 @@
       authErr('');
       await busy(e.submitter || $('#authForm button[type=submit]'), 'Membuat akun…', async () => {
         try {
-          const meta = { name, gym: String(d.gym || '').trim(), phone: String(d.phone || '').trim(), demo: !!d.demo };
+          const meta = { name, gym: String(d.gym || '').trim(), phone: String(d.phone || '').trim() };
           const r = await Cloud.signUp(email, d.password, meta);
           if (r.needsConfirm) return renderCheckEmail(email);
           await enterApp(r.user, `Trial ${PT.CONFIG.trialDays} hari kamu aktif. Selamat mencoba!`);
@@ -372,7 +372,6 @@
       const m = user.user_metadata || {};
       PT.createAccount({ name: m.name || user.email.split('@')[0], gym: m.gym || '', phone: m.phone || '', email: user.email });
       PTSeed.programs();
-      if (m.demo) PTSeed.demo();
       dirty = true;
     }
     PT.S.account.email = user.email;
@@ -664,7 +663,7 @@
     const m = modal(`${mhead(esc(s.dayName || 'Sesi bebas'), `${esc(c ? c.name : '')} · ${PT.fmtDateLong(s.date)}`)}
       <div class="mbody">
         <div class="sess-sum"><span><b>${s.exercises.length}</b>gerakan</span><span><b>${PT.setCount(s)}</b>set</span><span><b>${fmt(PT.volume(s))}</b>kg volume</span></div>
-        <div>${s.exercises.map(e => `<div class="sv-ex">${thumb(e.name, 'sm')}<div><b>${esc(e.name)}</b><div class="sv-sets">${e.sets.map((x, i) => `<span>${i + 1}. ${x[0] ? f1(x[0]) + ' kg' : 'BW'} × ${x[1]}</span>`).join('')}</div></div></div>`).join('')}</div>
+        <div>${s.exercises.map(e => `<div class="sv-ex">${thumb(e.name, 'sm')}<div><b>${esc(e.name)}</b><div class="sv-sets">${e.sets.map((x, i) => `<span>${setLabel(e.sets.map(y => ({ t: y[2] })), i)}. ${x[0] ? f1(x[0]) + ' kg' : 'BW'} × ${x[1]}</span>`).join('')}</div></div></div>`).join('')}</div>
         ${s.notes ? `<div class="note plain">${icon('file')}<p>${esc(s.notes)}</p></div>` : ''}
         ${s.photos && s.photos.length ? `<div><p class="sub-h" style="margin-bottom:8px">Foto progres</p><div class="pgrid">${s.photos.map(p => `<button type="button" class="pcell" data-act="photo-view" data-id="${esc(p.id)}" data-cid="${s.clientId}"><img data-photo="${esc(p.id)}" alt=""><span>${esc(poseLabel(p.pose))}</span></button>`).join('')}</div></div>` : ''}
       </div>
@@ -797,7 +796,7 @@
       const s = S.sessions.find(x => x.id === sessionId); if (!s) return null;
       return {
         id: s.id, clientId: s.clientId, date: s.date, programId: s.programId || '', dayName: s.dayName || '', notes: s.notes || '',
-        exercises: s.exercises.map(e => ({ name: e.name, target: null, rows: e.sets.map(x => ({ kg: String(x[0]).replace('.', ','), reps: String(x[1]), done: true })) })),
+        exercises: s.exercises.map(e => ({ name: e.name, target: null, rows: e.sets.map(x => ({ kg: String(x[0]).replace('.', ','), reps: String(x[1]), done: true, t: x[2] || undefined })) })),
         photos: (s.photos || []).map(p => ({ id: p.id, pose: p.pose })), origPhotos: (s.photos || []).map(p => p.id),
       };
     }
@@ -818,6 +817,7 @@
     shell('klien', `
       <div class="focus-head"><button class="iconbtn" data-act="log-leave" aria-label="Kembali">${icon('back')}</button>
         <div class="fh-t"><h2>${D.id ? 'Edit sesi' : 'Catat sesi'}</h2><p>${esc(c.name)}</p></div>
+        <button class="iconbtn" data-act="log-timer" aria-label="Timer istirahat">${icon('timer')}</button>
         <button class="btn primary sm" data-act="log-save">Simpan</button></div>
       <div class="log-top">
         <label class="datein">${icon('cal')}<input type="date" data-lf="date" value="${D.date}" max="${PT.today()}" aria-label="Tanggal sesi"></label>
@@ -829,7 +829,7 @@
       <div class="field log-notes"><label>Catatan sesi <small>opsional</small></label><textarea data-lf="notes" rows="2" placeholder="mis. Energi bagus, lutut aman, next naikin squat">${esc(D.notes || '')}</textarea></div>
       <section class="card ppics" id="logPh">${photoSlots()}</section>
       <div class="savebar"><div class="sb-sum" id="logSum"></div><button class="btn primary" data-act="log-save">${icon('check')}Simpan sesi</button></div>`, { focus: true });
-    paintLog();
+    paintLog(); paintRest();
   }
   function exBlock(e, ei) {
     const prev = prevOf(e.name);
@@ -838,6 +838,7 @@
       <div class="exb-h">${thumb(e.name)}<div class="exb-t"><b>${esc(e.name)}</b><small>${prev ? `Terakhir ${PT.fmtDate(prev.date, false)}: <b>${setTxt(prev.best)}</b>` : 'Belum pernah dicatat'}${tgt ? ` · Target ${esc(tgt)}` : ''}</small></div>
         <button class="iconbtn xs" data-act="log-delex" data-e="${ei}" aria-label="Hapus gerakan">${icon('trash')}</button></div>
       ${exNotes(e.name)}
+      <button class="restchip ${restOf(e) ? '' : 'off'}" data-act="log-rest" data-e="${ei}">${icon('timer')}Istirahat ${restTxt(restOf(e))}</button>
       <div class="set-h"><span>Set</span><span>Sebelumnya</span><span>kg</span><span>Reps</span><span>${icon('check')}</span></div>
       ${e.rows.map((r, ri) => setRow(e, ei, r, ri, prev)).join('')}
       <div class="exb-f"><button class="btn sm ghost" data-act="log-addset" data-e="${ei}">${icon('plus')}Set</button>${e.rows.length > 1 ? `<button class="btn sm ghost" data-act="log-delset" data-e="${ei}">Hapus set terakhir</button>` : ''}</div>
@@ -847,14 +848,123 @@
     const p = prev ? (prev.sets[ri] || prev.sets[prev.sets.length - 1]) : null;
     const phKg = p && p[0] ? String(p[0]).replace('.', ',') : '';
     const phReps = p ? p[1] : (e.target ? topReps(e.target.reps) : '');
+    const lb = setLabel(e.rows, ri);
     return `<div class="set ${r.done ? 'done' : ''}" data-e="${ei}" data-r="${ri}">
-      <span class="sn">${ri + 1}</span>
+      <button type="button" class="sn ${r.t || ''}" data-act="log-settype" data-e="${ei}" data-r="${ri}" aria-label="Set ${lb}: ubah tipe set">${lb}</button>
       <span class="sp">${p ? (p[0] ? `${f1(p[0])} × ${p[1]}` : `BW × ${p[1]}`) : '—'}</span>
       <input data-lf="kg" data-e="${ei}" data-r="${ri}" inputmode="decimal" value="${esc(r.kg)}" placeholder="${phKg}" aria-label="kg set ${ri + 1}">
       <input data-lf="reps" data-e="${ei}" data-r="${ri}" inputmode="numeric" value="${esc(r.reps)}" placeholder="${phReps}" aria-label="reps set ${ri + 1}">
       <button class="tick" data-act="log-tick" data-e="${ei}" data-r="${ri}" aria-label="Tandai set ${ri + 1} selesai">${icon('check')}</button>
     </div>`;
   }
+  /* ---------- tipe set (W/F/D) ---------- */
+  const SET_T = { w: ['W', 'Pemanasan', 'Beban ringan sebelum set utama. Tidak dihitung sebagai rekor.'],
+    f: ['F', 'Sampai gagal', 'Diulang sampai benar-benar tidak kuat lagi (failure).'],
+    d: ['D', 'Drop set', 'Langsung turunkan beban dan lanjut tanpa istirahat.'] };
+  // Nomor hanya dihitung dari set normal; set W/F/D tampil sebagai hurufnya
+  const setLabel = (rows, ri) => SET_T[rows[ri].t] ? SET_T[rows[ri].t][0] : rows.slice(0, ri + 1).filter(r => !SET_T[r.t]).length;
+  function openSetType(ei, ri) {
+    const e = D.exercises[ei], r = e.rows[ri], cur = SET_T[r.t] ? r.t : 'n';
+    const opt = (t, l, h, p) => `<button type="button" class="st-opt ${cur === t ? 'on' : ''}" data-t="${t}"><b class="sn ${t === 'n' ? '' : t}">${l}</b><span><b>${h}</b><small>${p}</small></span>${cur === t ? icon('check') : ''}</button>`;
+    const def = restOf(e), curRest = r.rest;
+    const rc = (v, l) => `<button type="button" class="chip ${curRest === v ? 'on' : ''}" data-rest="${v == null ? '' : v}">${l}</button>`;
+    const m = modal(`${mhead(`Set ${setLabel(e.rows, ri)}`, esc(e.name))}
+      <div class="mbody">
+        <div class="st-list">
+          ${opt('w', 'W', SET_T.w[1], SET_T.w[2])}
+          ${opt('n', setLabel(e.rows.map((x, i) => i === ri ? { t: undefined } : x), ri), 'Set normal', 'Set kerja biasa.')}
+          ${opt('f', 'F', SET_T.f[1], SET_T.f[2])}
+          ${opt('d', 'D', SET_T.d[1], SET_T.d[2])}
+        </div>
+        <div><p class="sub-h" style="margin-bottom:8px">Istirahat setelah set ini</p>
+          <div class="chips wrap">${rc(undefined, `Ikuti gerakan · ${restTxt(def)}`)}${RESTS.map(v => rc(v, restTxt(v))).join('')}</div></div>
+        ${e.rows.length > 1 ? `<button type="button" class="btn danger block" data-rm>${icon('x')}Hapus set ini</button>` : ''}
+      </div>`, { cls: 'small' });
+    m.el.addEventListener('click', ev => {
+      const t = ev.target.closest('[data-t]'), rs = ev.target.closest('[data-rest]'), rm = ev.target.closest('[data-rm]');
+      if (t) { r.t = t.dataset.t === 'n' ? undefined : t.dataset.t; }
+      else if (rs) { r.rest = rs.dataset.rest === '' ? undefined : +rs.dataset.rest; }
+      else if (rm) { e.rows.splice(ri, 1); }
+      else return;
+      persistDraft(); paintEx(ei); m.close();
+    });
+  }
+
+  /* ---------- timer istirahat ---------- */
+  const RESTS = [0, 30, 45, 60, 90, 120, 150, 180, 300];
+  const restTxt = v => !v ? 'Mati' : v < 60 ? `${v} dtk` : v % 60 ? `${Math.floor(v / 60)}:${String(v % 60).padStart(2, '0')}` : `${v / 60} mnt`;
+  const restPrefs = () => PT.S.restPrefs || (PT.S.restPrefs = {});
+  // Waktu istirahat per gerakan: pilihan di sesi ini → pilihan terakhir untuk gerakan ini → 90 detik
+  const restOf = e => e.rest != null ? e.rest : (restPrefs()[e.name] != null ? restPrefs()[e.name] : 90);
+  function openRestPick(ei) {
+    const e = D.exercises[ei], cur = restOf(e);
+    const m = modal(`${mhead('Waktu istirahat', `${esc(e.name)} · berlaku untuk tiap set`)}
+      <div class="mbody"><div class="chips wrap">${RESTS.map(v => `<button type="button" class="chip ${cur === v ? 'on' : ''}" data-rest="${v}">${restTxt(v)}</button>`).join('')}</div>
+        <p class="muted small">Timer mulai otomatis tiap kamu centang set. Mau beda per set? Ketuk nomor set.</p></div>`, { cls: 'small' });
+    m.el.addEventListener('click', ev => {
+      const b = ev.target.closest('[data-rest]'); if (!b) return;
+      e.rest = +b.dataset.rest; restPrefs()[e.name] = e.rest; PT.save();
+      persistDraft(); paintEx(ei); m.close();
+    });
+  }
+  let REST = null, restIv = 0, audio = null;
+  const mmss = ms => { const t = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
+  function beep() {
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      [0, .22, .44].forEach((d, i) => {
+        const o = audio.createOscillator(), g = audio.createGain(), t = audio.currentTime + d;
+        o.frequency.value = i === 2 ? 1320 : 880; o.connect(g); g.connect(audio.destination);
+        g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.35, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + .18);
+        o.start(t); o.stop(t + .2);
+      });
+    } catch (_) { }
+  }
+  function restStart(sec, label) {
+    try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); } catch (_) { }  // izin audio dari tap user
+    REST = { end: Date.now() + sec * 1000, total: sec * 1000, label };
+    clearInterval(restIv); restIv = setInterval(restTick, 250); paintRest();
+  }
+  function restStop() { REST = null; clearInterval(restIv); paintRest(); }
+  function restAdd(sec) { if (!REST) return; REST.end += sec * 1000; REST.total = Math.max(1000, REST.total + sec * 1000); if (REST.end <= Date.now()) return restStop(); paintRest(); }
+  function restTick() {
+    if (!REST) return;
+    if (Date.now() >= REST.end) {
+      const label = REST.label; restStop(); beep();
+      try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (_) { }
+      if (document.hidden && 'Notification' in window && Notification.permission === 'granted') { try { new Notification('Istirahat selesai', { body: label }); } catch (_) { } }
+      toast('Istirahat selesai — lanjut set berikutnya 💪');
+      return;
+    }
+    paintRest();
+  }
+  function paintRest() {
+    let bar = $('#restBar');
+    if (!REST || !$('.savebar')) { if (bar) bar.remove(); return; }
+    if (!bar) {
+      bar = document.createElement('div'); bar.id = 'restBar'; bar.className = 'restbar';
+      bar.innerHTML = `<i class="rb-fill"></i><span class="rb-ic">${icon('timer')}</span><div class="rb-t"><b></b><small></small></div>
+        <button type="button" class="rb-btn" data-rb="-15">−15</button><button type="button" class="rb-btn" data-rb="15">+15</button><button type="button" class="rb-btn skip" data-rb="skip">Lewati</button>`;
+      bar.addEventListener('click', ev => { const b = ev.target.closest('[data-rb]'); if (!b) return; b.dataset.rb === 'skip' ? restStop() : restAdd(+b.dataset.rb); });
+      $('#app').appendChild(bar);
+    }
+    const left = REST.end - Date.now();
+    bar.querySelector('b').textContent = mmss(left);
+    bar.querySelector('small').textContent = REST.label;
+    bar.querySelector('.rb-fill').style.transform = `scaleX(${Math.max(0, Math.min(1, left / REST.total)).toFixed(4)})`;
+  }
+  function openTimer() {
+    const m = modal(`${mhead('Timer istirahat', REST ? esc(REST.label) : 'Mulai timer manual')}
+      <div class="mbody"><div class="chips wrap">${RESTS.filter(Boolean).map(v => `<button type="button" class="chip" data-go="${v}">${restTxt(v)}</button>`).join('')}</div>
+        <p class="muted small">Timer juga mulai otomatis tiap kamu centang set — atur lamanya lewat tombol <b>Istirahat</b> di tiap gerakan.</p>
+        ${REST ? '<button type="button" class="btn block" data-stop>Hentikan timer</button>' : ''}</div>`, { cls: 'small' });
+    m.el.addEventListener('click', ev => {
+      const g = ev.target.closest('[data-go]'), st = ev.target.closest('[data-stop]');
+      if (g) { restStart(+g.dataset.go, 'Timer manual'); m.close(); }
+      else if (st) { restStop(); m.close(); }
+    });
+  }
+
   function paintLog() {
     const el = $('#logEx'); if (!el) return;
     el.innerHTML = D.exercises.length ? D.exercises.map(exBlock).join('')
@@ -897,7 +1007,7 @@
   function saveLog() {
     const exercises = D.exercises.map(e => ({
       name: e.name,
-      sets: e.rows.map((r, ri) => (r.done && num(r.reps) > 0) ? [rowKg(e, r, ri), num(r.reps)] : null).filter(Boolean),
+      sets: e.rows.map((r, ri) => (r.done && num(r.reps) > 0) ? (SET_T[r.t] ? [rowKg(e, r, ri), num(r.reps), r.t] : [rowKg(e, r, ri), num(r.reps)]) : null).filter(Boolean),
     })).filter(e => e.sets.length);
     if (!exercises.length) { toast('Tandai minimal 1 set dulu ya', 'err'); return; }
     if (PH_BUSY.size) { toast('Tunggu sebentar — foto masih diproses', 'err'); return; }
@@ -1533,11 +1643,16 @@
         if (!num(r.reps)) { toast('Isi reps dulu ya', 'err'); ireps.focus(); return; }
         if (r.kg === '' && ikg.placeholder) r.kg = ikg.placeholder;
         r.done = true;
+        const sec = r.rest != null ? r.rest : restOf(e);
+        if (sec > 0) restStart(sec, `${e.name} · set ${setLabel(e.rows, ri)}`);
       }
       ikg.value = r.kg; ireps.value = r.reps;
       row.classList.toggle('done', r.done);
       persistDraft(); paintSum();
     },
+    'log-settype': el => openSetType(+el.dataset.e, +el.dataset.r),
+    'log-rest': el => openRestPick(+el.dataset.e),
+    'log-timer': () => openTimer(),
     'log-addset': el => { const ei = +el.dataset.e; D.exercises[ei].rows.push({ kg: '', reps: '', done: false }); persistDraft(); paintEx(ei); },
     'log-delset': el => { const ei = +el.dataset.e; if (D.exercises[ei].rows.length > 1) D.exercises[ei].rows.pop(); persistDraft(); paintEx(ei); },
     'log-delex': async el => {

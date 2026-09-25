@@ -231,7 +231,8 @@ window.PT = (function () {
   const volume = s => s.exercises.reduce((t, e) => t + e.sets.reduce((u, x) => u + (x[0] || 0) * (x[1] || 0), 0), 0);
   const setCount = s => s.exercises.reduce((t, e) => t + e.sets.length, 0);
   // Set terberat (kg terbesar; kalau sama, reps terbanyak)
-  const best = sets => sets.reduce((b, x) => (!b || x[0] > b[0] || (x[0] === b[0] && x[1] > b[1])) ? x : b, null);
+  // Set pemanasan (x[2] === 'w') tidak dihitung sebagai beban terbaik/rekor, kecuali isinya pemanasan semua
+  const best = sets => { const work = sets.filter(x => x[2] !== 'w'); return (work.length ? work : sets).reduce((b, x) => (!b || x[0] > b[0] || (x[0] === b[0] && x[1] > b[1])) ? x : b, null); };
   const better = (a, b) => !b || a[0] > b[0] || (a[0] === b[0] && a[1] > b[1]);
   const e1rm = x => x[0] * (1 + x[1] / 30);
 
