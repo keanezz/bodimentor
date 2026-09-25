@@ -9,7 +9,10 @@ window.Cloud = (function () {
   'use strict';
   const cfg = window.PT_CONFIG || {};
   const bootHash = location.hash;   // ditangkap sebelum Supabase membersihkan token di URL
+  const configured = !!(cfg.supabaseUrl || cfg.supabaseAnonKey);
   const enabled = !!(cfg.supabaseUrl && cfg.supabaseAnonKey && window.supabase && window.supabase.createClient);
+  const unavailable = configured && !enabled;
+  const assertReady = () => { if (unavailable) throw new Error('Koneksi akun belum siap. Periksa internet lalu muat ulang aplikasi.'); };
   const sb = enabled ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'implicit', storageKey: 'bmpt-auth' },
   }) : null;
@@ -49,6 +52,7 @@ window.Cloud = (function () {
 
   /* ---------- auth ---------- */
   async function init() {
+    assertReady();
     if (!sb) {
       const d = lget();
       user = d.session && d.users[d.session] ? localUser(d.session, d.users[d.session]) : null;
@@ -61,6 +65,7 @@ window.Cloud = (function () {
     return { user, recovery: recovery && !!user, error: err ? msg(decodeURIComponent(err[1].replace(/\+/g, ' '))) : null };
   }
   async function signUp(email, password, meta) {
+    assertReady();
     email = email.trim().toLowerCase();
     if (!sb) {
       const d = lget();
@@ -77,6 +82,7 @@ window.Cloud = (function () {
     return { user, needsConfirm: !data.session };
   }
   async function signIn(email, password) {
+    assertReady();
     email = email.trim().toLowerCase();
     if (!sb) {
       const d = lget(), u = d.users[email];
@@ -94,10 +100,12 @@ window.Cloud = (function () {
     user = null;
   }
   async function requestReset(email) {
+    assertReady();
     if (!sb) throw new Error('Reset password lewat email aktif setelah server (Supabase) tersambung.');
     await run(sb.auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo: appUrl() }));
   }
   async function setPassword(password) {
+    assertReady();
     if (!sb) {
       const d = lget(), u = user && d.users[user.email];
       if (!u) throw new Error('Silakan masuk dulu.');
@@ -165,7 +173,7 @@ window.Cloud = (function () {
   }
 
   return {
-    enabled, get user() { return user; }, get recovery() { return recovery; },
+    enabled, unavailable, get user() { return user; }, get recovery() { return recovery; },
     init, signUp, signIn, signOut, requestReset, setPassword,
     loadDoc, saveDoc, getSub, activate, payments,
     uploadPhoto, downloadPhoto, deletePhoto, flushPhotos,

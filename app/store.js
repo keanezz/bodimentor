@@ -27,7 +27,11 @@ window.PT = (function () {
      Cache lokal per akun (bmpt.v1:<userId>). Kalau server aktif, app.js
      memasang onSave() untuk mengirim dokumen ke server (debounce). */
   const blank = () => ({ v: 1, account: null, clients: [], programs: [], sessions: [], measurements: [], invoices: [], customExercises: [], draft: null, updatedAt: 0 });
-  let key = KEY, hook = null;
+  let key = KEY, hook = null, storageError = false;
+  function storageState(failed) {
+    storageError = failed;
+    if (typeof window.dispatchEvent === 'function') window.dispatchEvent(new Event('pt-storage'));
+  }
   function load() {
     try {
       const s = JSON.parse(localStorage.getItem(key) || 'null');
@@ -41,6 +45,7 @@ window.PT = (function () {
     let ok = true;
     try { localStorage.setItem(key, JSON.stringify(S)); }
     catch (e) { console.error('save failed', e); ok = false; }
+    storageState(!ok);
     if (hook) hook(S);
     return ok;
   }
@@ -182,7 +187,7 @@ window.PT = (function () {
     .sort((a, b) => b.date.localeCompare(a.date) || (b.createdAt || 0) - (a.createdAt || 0));
   function saveSession(s) {
     if (!s.id) { s.id = uid('s'); s.createdAt = Date.now(); S.sessions.push(s); }
-    else { const i = S.sessions.findIndex(x => x.id === s.id); S.sessions[i] = Object.assign(S.sessions[i], s); }
+    else { const i = S.sessions.findIndex(x => x.id === s.id); if (i < 0) throw new Error('Sesi tidak ditemukan. Buka kembali klien sebelum menyimpan.'); S.sessions[i] = Object.assign(S.sessions[i], s); }
     save(); return s;
   }
   function removeSession(id) { S.sessions = S.sessions.filter(s => s.id !== id); save(); }
@@ -202,7 +207,7 @@ window.PT = (function () {
       const ps = all.filter(p => p.pose === pose);
       if (ps.length >= 2 && ps[0].date !== ps[ps.length - 1].date) return { before: ps[0], after: ps[ps.length - 1], all: ps };
     }
-    return all.length >= 2 && all[0].date !== all[all.length - 1].date ? { before: all[0], after: all[all.length - 1], all } : null;
+    return null; // Jangan membandingkan dua pose berbeda sebagai before–after.
   }
   const sessionPhotoIds = id => { const s = S.sessions.find(x => x.id === id); return s && s.photos ? s.photos.map(p => p.id) : []; };
   const clientPhotoIds = cid => photosOf(cid).map(p => p.id);
@@ -297,8 +302,9 @@ window.PT = (function () {
   function addMeasure(m) { m.id = uid('m'); S.measurements.push(m); save(); return m; }
   function removeMeasure(id) { S.measurements = S.measurements.filter(m => m.id !== id); save(); }
   // Ukuran terakhir yang tercatat s/d akhir bulan `key`
-  function measureAt(cid, key) {
-    const ms = measuresOf(cid).filter(m => monthKey(m.date) <= key);
+  function measureAt(cid, key, uptoDay) {
+    const limit = uptoDay ? `${key}-${pad(uptoDay)}` : `${key}-31`;
+    const ms = measuresOf(cid).filter(m => m.date <= limit);
     return ms[ms.length - 1] || null;
   }
 
@@ -324,7 +330,7 @@ window.PT = (function () {
     for (const s of ss) for (const e of s.exercises) {
       const b = best(e.sets); if (b && better(b, liftBest[e.name])) liftBest[e.name] = b;
     }
-    const m = measureAt(cid, key);
+    const m = measureAt(cid, key, uptoDay);
     return {
       key, label: monthLabel(key), sessions: ss.length, volume: vol, avgVol: ss.length ? vol / ss.length : 0,
       sets: ss.reduce((t, s) => t + setCount(s), 0),
@@ -360,22 +366,55 @@ window.PT = (function () {
 
   /* ---------- backup ---------- */
   const exportJSON = () => JSON.stringify(S);
-  function importJSON(str) {
-    const d = JSON.parse(str);
-    if (!d || d.v !== 1 || !Array.isArray(d.clients)) throw new Error('Format file tidak dikenali');
-    S = Object.assign(blank(), d); save();
+  function validateBackup(str) {
+    const fail = () => { throw new Error('File backup tidak valid atau isinya tidak lengkap.'); };
+    let d; try { d = JSON.parse(str); } catch (_) { fail(); }
+    const obj = x => x && typeof x === 'object' && !Array.isArray(x);
+    const text = x => typeof x === 'string';
+    const safeId = x => text(x) && /^[a-zA-Z0-9_-]+$/.test(x);
+    const date = x => text(x) && /^\d{4}-\d{2}-\d{2}$/.test(x) && !isNaN(parse(x)) && iso(parse(x)) === x;
+    const number = x => typeof x === 'number' && Number.isFinite(x) && x >= 0;
+    if (!obj(d) || d.v !== 1) fail();
+    for (const k of ['clients', 'programs', 'sessions', 'measurements']) if (!Array.isArray(d[k])) fail();
+    if (d.customExercises !== undefined && !Array.isArray(d.customExercises)) fail();
+    const unique = list => { const ids = new Set(); for (const x of list) { if (!obj(x) || !safeId(x.id) || ids.has(x.id)) fail(); ids.add(x.id); } };
+    for (const k of ['clients', 'programs', 'sessions', 'measurements']) unique(d[k]);
+    const cids = new Set(d.clients.map(c => c.id));
+    for (const c of d.clients) {
+      if (!text(c.name) || !c.name.trim() || !number(c.createdAt)) fail();
+      for (const k of ['phone','gender','goal','type','level','notes','programId']) if (c[k] != null && !text(c[k])) fail();
+      for (const k of ['startDate','pkgStart']) if (c[k] && !date(c[k])) fail();
+      for (const k of ['birthYear','heightCm','perWeek','pkgTotal']) if (c[k] != null && !number(c[k])) fail();
+    }
+    for (const p of d.programs) {
+      if (!text(p.name) || !Array.isArray(p.days)) fail();
+      for (const day of p.days) if (!obj(day) || !text(day.name) || !Array.isArray(day.exercises) || day.exercises.some(e => !obj(e) || !text(e.name))) fail();
+    }
+    for (const session of d.sessions) {
+      if (!cids.has(session.clientId) || !date(session.date) || !Array.isArray(session.exercises)) fail();
+      for (const e of session.exercises) if (!obj(e) || !text(e.name) || !Array.isArray(e.sets) || e.sets.some(set => !Array.isArray(set) || set.length < 2 || !number(set[0]) || !number(set[1]))) fail();
+      if (session.photos !== undefined && (!Array.isArray(session.photos) || session.photos.some(ph => !obj(ph) || !safeId(ph.id) || (ph.pose && !['depan','samping','belakang'].includes(ph.pose))))) fail();
+    }
+    for (const m of d.measurements) {
+      if (!cids.has(m.clientId) || !date(m.date)) fail();
+      for (const k of ['weight','bodyFat','waist']) if (m[k] != null && !number(m[k])) fail();
+    }
+    for (const e of d.customExercises || []) if (!obj(e) || !text(e.name) || !e.name.trim() || (e.id != null && !safeId(e.id))) fail();
+    return { clients:d.clients, programs:d.programs, sessions:d.sessions, measurements:d.measurements, customExercises:(d.customExercises || []).map(e => ({ ...e, id:e.id || uid('x') })) };
   }
-  function removeDemo() {
-    const ids = new Set(S.clients.filter(c => c.demo).map(c => c.id));
-    S.clients = S.clients.filter(c => !ids.has(c.id));
-    S.sessions = S.sessions.filter(s => !ids.has(s.clientId));
-    S.measurements = S.measurements.filter(m => !ids.has(m.clientId));
-    save();
+  function importJSON(str) {
+    const data = validateBackup(str);
+    // Restore training data only. Identity, subscription and billing belong to the signed-in account.
+    const next = Object.assign({}, S, data, { draft:null, updatedAt:Date.now() });
+    try { localStorage.setItem(key, JSON.stringify(next)); }
+    catch (_) { storageState(true); throw new Error('Penyimpanan penuh. Data lama belum diganti. Kosongkan ruang lalu coba lagi.'); }
+    S = next; fixIds(); storageState(false);
+    if (hook) hook(S);
   }
   function resetAll() { S = blank(); try { localStorage.removeItem(key); } catch (e) { } }
 
   return {
-    CONFIG, DAY, get S() { return S; }, save, uid, bind, replace, onSave,
+    CONFIG, DAY, get S() { return S; }, get storageError() { return storageError; }, save, uid, bind, replace, onSave,
     photosOf, beforeAfter, sessionPhotoIds, clientPhotoIds, customEx, customExById, saveCustomEx, removeCustomEx,
     // dates
     iso, today, parse, addDays, daysBetween, monthKey, monthLabel, prevMonth, fmtDate, fmtDateLong, fmtTs, ago, MONTHS, MONTHS_FULL,
@@ -387,6 +426,6 @@ window.PT = (function () {
     sessionsOf, saveSession, removeSession, volume, setCount, best, better, e1rm, lastOf, lifts, detectPRs, nextDay, topExercises,
     measuresOf, addMeasure, removeMeasure, measureAt,
     status, monthStats, partialDay, prevStats, vsLabel, firstMonth, monthsWithData,
-    exportJSON, importJSON, removeDemo, resetAll,
+    exportJSON, validateBackup, importJSON, resetAll,
   };
 })();

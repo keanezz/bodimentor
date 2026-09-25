@@ -103,22 +103,44 @@
   /* ---------- toast, modal, confirm ---------- */
   let toastT;
   function toast(msg, kind = '') {
+    if (PT.storageError && !kind && !/backup/i.test(msg)) { msg = 'Perubahan belum aman di perangkat. Jangan tutup aplikasi; coba simpan ulang atau backup.'; kind = 'err'; }
     const t = $('#toast'); t.textContent = msg; t.className = 'toast show ' + kind;
     clearTimeout(toastT); toastT = setTimeout(() => { t.className = 'toast'; }, 2800);
   }
   function modal(html, { cls = '', onClose } = {}) {
+    const returnFocus = document.activeElement;
     const wrap = document.createElement('div');
     wrap.className = 'mback';
     wrap.innerHTML = `<div class="modal ${cls}" role="dialog" aria-modal="true">${html}</div>`;
     $('#modals').appendChild(wrap);
-    requestAnimationFrame(() => wrap.classList.add('in'));
+    document.body.classList.add('modal-open');
+    const dialog = wrap.firstElementChild;
+    dialog.tabIndex = -1;
+    const heading = dialog.querySelector('h3');
+    if (heading) dialog.setAttribute('aria-label', heading.textContent);
+    const focusable = () => [...dialog.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex="0"]')].filter(el => el.getClientRects().length);
+    requestAnimationFrame(() => { wrap.classList.add('in'); dialog.focus({ preventScroll: true }); });
     let closed = false;
-    const onKey = e => { if (e.key === 'Escape' && wrap === $('#modals').lastElementChild) close(); };
+    const onKey = e => {
+      if (wrap !== $('#modals').lastElementChild || closed) return;
+      if (e.key === 'Escape') { e.preventDefault(); close(); }
+      if (e.key === 'Tab') {
+        const els = focusable(), first = els[0], last = els[els.length - 1];
+        if (!first) { e.preventDefault(); dialog.focus(); }
+        else if (e.shiftKey && (document.activeElement === first || document.activeElement === dialog)) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && (document.activeElement === last || document.activeElement === dialog)) { e.preventDefault(); first.focus(); }
+      }
+    };
     function close() {
       if (closed) return; closed = true;
       wrap.classList.remove('in');
       document.removeEventListener('keydown', onKey);
-      setTimeout(() => wrap.remove(), 200);
+      wrap.inert = true;
+      setTimeout(() => {
+        wrap.remove();
+        if (!$('#modals').children.length) document.body.classList.remove('modal-open');
+        if (returnFocus && returnFocus.isConnected) returnFocus.focus({ preventScroll: true });
+      }, 250);
       if (onClose) onClose();
     }
     document.addEventListener('keydown', onKey);
@@ -137,8 +159,16 @@
   const emptyBox = (ic, h, p, cta = '') => `<div class="empty">${icon(ic)}<h3>${h}</h3><p>${p}</p>${cta}</div>`;
   const waLink = (phone, text) => Report.waUrl(phone, text);
   // Foto (gerakan buatan & progres klien) dimuat otomatis tiap ada <img data-photo> baru di layar
-  let hyd = 0;
-  new MutationObserver(() => { cancelAnimationFrame(hyd); hyd = requestAnimationFrame(() => Photos.hydrate(document)); })
+  let hyd = 0, labelSeq = 0;
+  function labelFields() {
+    document.querySelectorAll('.field').forEach(field => {
+      const label = field.querySelector('label'), control = field.querySelector('input:not([type="hidden"]),select,textarea');
+      if (!label || !control || label.htmlFor) return;
+      if (!control.id) control.id = 'pt-field-' + (++labelSeq);
+      label.htmlFor = control.id;
+    });
+  }
+  new MutationObserver(() => { cancelAnimationFrame(hyd); hyd = requestAnimationFrame(() => { Photos.hydrate(document); labelFields(); }); })
     .observe(document.body, { childList: true, subtree: true });
 
   /* ---------- state UI ---------- */
@@ -153,6 +183,11 @@
     KEEP = keep === true;
     const h = (location.hash || '').replace(/^#\/?/, '');
     const [a, b, c] = h.split('/');
+    if (Cloud.unavailable) {
+      $('#app').innerHTML = '<main class="boot-error"><h1>Koneksi akun belum siap</h1><p>Komponen login belum berhasil dimuat. Periksa koneksi internet, lalu coba lagi.</p><button class="btn primary" id="reloadApp">Muat ulang</button></main>';
+      $('#reloadApp').onclick = () => location.reload();
+      return;
+    }
     if (!Cloud.user) return a === 'daftar' ? renderSignup() : a === 'lupa' ? renderForgot() : renderLogin();
     if (a === 'reset' || Cloud.recovery) return renderReset();
     if (!PT.S.account || a === 'masuk' || a === 'daftar' || a === 'lupa') { location.replace('#/klien'); return; }
@@ -168,14 +203,15 @@
 
   /* ---------- shell & status langganan ---------- */
   function shell(active, inner, opt = {}) {
-    const nav = NAV.map(([k, l, i]) => `<a href="#/${k}" class="${active === k ? 'on' : ''}">${icon(i)}<span>${l}</span></a>`).join('');
+    const nav = NAV.map(([k, l, i]) => `<a href="#/${k}" ${active === k ? 'aria-current="page"' : ''} class="${active === k ? 'on' : ''}">${icon(i)}<span>${l}</span></a>`).join('');
     const brand = `<a class="brand" href="#/klien"><img src="/app/assets/logo-mark.png" alt="">Bodimentor<b>PT</b></a>`;
     $('#app').innerHTML = `<div class="shell ${opt.focus ? 'focus' : ''}">
       ${opt.focus ? '' : `<header class="topbar">${brand}${subChip()}</header>`}
-      <main class="main">${opt.focus ? '' : banner()}<div class="view">${inner}</div></main>
+      <main class="main"><div id="dataStatus" aria-live="polite"></div>${opt.focus ? '' : banner()}<div class="view">${inner}</div></main>
       ${opt.focus ? '' : `<nav class="tabbar">${nav}</nav>`}</div>`;
     if (!KEEP) window.scrollTo(0, 0);
     KEEP = false;
+    paintDataStatus();
   }
   function subChip() {
     const s = PT.sub(), C = PT.CONFIG;
@@ -228,7 +264,7 @@
     authShell(`<form class="form" id="authForm" novalidate>
         <h2>Masuk ke akun PT</h2>
         <p class="muted small">Belum punya akun? <a class="link" href="#/daftar">Daftar gratis ${PT.CONFIG.trialDays} hari</a></p>
-        <div class="field"><label>Email</label><input name="email" type="email" inputmode="email" autocomplete="email" required placeholder="nama@email.com"></div>
+        <div class="field"><label>Email</label><input name="email" type="email" inputmode="email" autocomplete="email" required ></div>
         ${pwField('password', 'Password', 'current-password')}
         <div class="auth-row"><a class="link" href="#/lupa">Lupa password?</a></div>
         <div id="authErr">${msg ? `<div class="note plain">${icon('check')}<p>${esc(msg)}</p></div>` : ''}</div>
@@ -249,10 +285,10 @@
     authShell(`<form class="form" id="authForm" novalidate>
         <h2>Buat akun PT</h2>
         <p class="muted small">Trial ${PT.CONFIG.trialDays} hari gratis, tanpa kartu kredit. Sudah punya akun? <a class="link" href="#/masuk">Masuk</a></p>
-        <div class="field"><label>Nama kamu</label><input name="name" required autocomplete="name" placeholder="mis. Kimi Mawarid"></div>
-        <div class="field"><label>Nama gym / brand <small>opsional</small></label><input name="gym" autocomplete="organization" placeholder="mis. Bodimentor Coaching"></div>
-        <div class="field"><label>No. WhatsApp <small>tampil di laporan klien</small></label><input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0812xxxxxxx"></div>
-        <div class="field"><label>Email</label><input name="email" type="email" inputmode="email" autocomplete="email" required placeholder="nama@email.com"></div>
+        <div class="field"><label>Nama kamu</label><input name="name" required autocomplete="name"></div>
+        <div class="field"><label>Nama gym / brand <small>opsional</small></label><input name="gym" autocomplete="organization"></div>
+        <div class="field"><label>No. WhatsApp <small>tampil di laporan klien</small></label><input name="phone" type="tel" inputmode="tel" autocomplete="tel" ></div>
+        <div class="field"><label>Email</label><input name="email" type="email" inputmode="email" autocomplete="email" required ></div>
         ${pwField('password', 'Buat password', 'new-password', 'minimal 8 karakter')}
         <div id="authErr"></div>
         <button class="btn primary lg block" type="submit">Buat akun & mulai trial</button>
@@ -286,7 +322,7 @@
     authShell(`<form class="form" id="authForm" novalidate>
         <h2>Lupa password</h2>
         <p class="muted small">Masukkan email akun kamu. Kami kirim link untuk membuat password baru.</p>
-        <div class="field"><label>Email</label><input name="email" type="email" inputmode="email" autocomplete="email" required placeholder="nama@email.com"></div>
+        <div class="field"><label>Email</label><input name="email" type="email" inputmode="email" autocomplete="email" required ></div>
         <div id="authErr"></div>
         <button class="btn primary lg block" type="submit">Kirim link reset</button>
         <p class="fine"><a class="link" href="#/masuk">Kembali ke halaman masuk</a></p>
@@ -330,15 +366,23 @@
   }
 
   /* ---------- buka data akun + sinkron server ---------- */
-  let pushT = 0, pushing = false, dirty = false;
-  function pushSoon(ms = 1500) { dirty = true; clearTimeout(pushT); pushT = setTimeout(pushNow, ms); }
+  let pushT = 0, pushing = false, dirty = false, syncFailed = false;
+  function paintDataStatus() {
+    const el = $('#dataStatus'); if (!el) return;
+    if (PT.storageError) el.innerHTML = '<div class="data-status bad"><div><b>Penyimpanan perangkat bermasalah</b><p>Perubahan masih ada di layar. Jangan tutup aplikasi sebelum simpan ulang atau unduh backup.</p></div><div class="btnrow"><button class="btn sm" data-act="save-retry">Coba simpan</button><button class="btn sm" data-act="backup">Backup data</button></div></div>';
+    else if (Cloud.enabled && (syncFailed || !navigator.onLine)) el.innerHTML = '<div class="data-status"><div><b>Data tersimpan di perangkat ini</b><p>Sinkron ke akun tertunda. Kami coba lagi saat koneksi kembali.</p></div><button class="btn sm" data-act="sync-retry">Coba lagi</button></div>';
+    else el.innerHTML = '<p class="sync-line">' + (Cloud.enabled ? (dirty || pushing ? 'Menyinkronkan perubahan…' : 'Sinkronisasi otomatis aktif') : 'Mode lokal · data di perangkat ini') + '</p>';
+  }
+  window.addEventListener('pt-storage', paintDataStatus);
+  window.addEventListener('offline', paintDataStatus);
+  function pushSoon(ms = 1500) { dirty = true; clearTimeout(pushT); pushT = setTimeout(pushNow, ms); paintDataStatus(); }
   async function pushNow() {
     clearTimeout(pushT);
     if (!Cloud.enabled || !Cloud.user || pushing || !dirty) return;
-    pushing = true; dirty = false;
-    try { await Cloud.saveDoc(PT.S); }
-    catch (e) { dirty = true; console.warn('sinkron ditunda:', e.message); }
-    finally { pushing = false; if (dirty) pushT = setTimeout(pushNow, 8000); }
+    pushing = true; dirty = false; paintDataStatus();
+    try { await Cloud.saveDoc(PT.S); syncFailed = false; }
+    catch (e) { dirty = true; syncFailed = true; console.warn('sinkron ditunda:', e.message); }
+    finally { pushing = false; paintDataStatus(); if (dirty) pushT = setTimeout(pushNow, 8000); }
   }
   function applySub(s) {
     if (!s || !PT.S.account) return;
@@ -371,7 +415,6 @@
     if (!PT.S.account) {
       const m = user.user_metadata || {};
       PT.createAccount({ name: m.name || user.email.split('@')[0], gym: m.gym || '', phone: m.phone || '', email: user.email });
-      PTSeed.programs();
       dirty = true;
     }
     PT.S.account.email = user.email;
@@ -394,23 +437,26 @@
      ============================================================ */
   function renderClients() {
     const S = PT.S;
+    const draftClient = S.draft && PT.client(S.draft.clientId);
+    const resumeUrl = draftClient ? (S.draft.id ? '#/sesi/' + encodeURIComponent(S.draft.id) : '#/klien/' + encodeURIComponent(draftClient.id) + '/sesi') : '';
     const rows = S.clients.filter(c => c.active).map(c => ({ c, st: PT.status(c) }));
     const ids = new Set(rows.map(x => x.c.id));
     const wk = PT.addDays(PT.today(), -6);
-    const weekSess = S.sessions.filter(s => s.date >= wk && ids.has(s.clientId)).length;
+    const weekSess = S.sessions.filter(s => s.date >= wk && s.date <= PT.today() && ids.has(s.clientId)).length;
     const att = rows.filter(x => x.st.follow || x.st.pkgLow)
       .sort((a, b) => (b.st.pkgLow - a.st.pkgLow) || ((b.st.since || 99) - (a.st.since || 99)));
     shell('klien', `
-      <div class="phead"><div><p class="eyebrow">Halo, Coach ${esc(firstName(S.account.name))}</p><h1>Klien kamu</h1></div>
+      <div class="phead"><div><p class="eyebrow">Halo, Coach ${esc(firstName(S.account.name.replace(/^coach\s+/i, '')))}</p><h1>Klien kamu</h1></div>
         <button class="btn primary sm" data-act="client-new">${icon('plus')}<span>Klien</span></button></div>
       <div class="stats">
         <div class="stat"><b>${rows.length}</b><span>Klien aktif</span></div>
         <div class="stat"><b>${weekSess}</b><span>Sesi 7 hari terakhir</span></div>
         <div class="stat ${att.length ? 'warn' : ''}"><b>${att.length}</b><span>Perlu perhatian</span></div>
       </div>
+      ${draftClient ? `<div class="resume-card"><div><span class="eyebrow">Sesi belum selesai</span><b>${esc(draftClient.name)}</b><p>Lanjutkan dari catatan terakhir kamu.</p></div><a class="btn primary sm" href="${resumeUrl}" data-guard>Lanjutkan</a></div>` : ''}
       ${att.length ? attentionCard(att) : ''}
       ${S.clients.length ? `<div class="listbar">
-        <label class="search">${icon('search')}<input id="cq" type="search" placeholder="Cari nama klien…" value="${esc(UI.q)}" autocomplete="off"></label>
+        <label class="search">${icon('search')}<input id="cq" aria-label="Cari nama klien" type="search" placeholder="Cari nama klien…" value="${esc(UI.q)}" autocomplete="off"></label>
         <div class="chips" id="cfilter">${[['aktif', 'Aktif'], ['semua', 'Semua'], ['nonaktif', 'Nonaktif']].map(([k, l]) => `<button class="chip ${UI.filter === k ? 'on' : ''}" data-filter="${k}">${l}</button>`).join('')}</div>
       </div>` : ''}
       <div id="clist" class="clist"></div>`);
@@ -448,15 +494,12 @@
     el.innerHTML = rows.length ? rows.map(({ c, st }) => clientCard(c, st)).join('') : `<div class="empty sm">Gak ada klien yang cocok.</div>`;
   }
   function clientCard(c, st) {
-    const prog = PT.program(c.programId), age = PT.age(c);
-    const tl = st.last ? topLift(st.last) : null;
-    const dot = !c.active ? 'off' : st.follow ? 'rose' : '';
+    const recent = st.last ? `Latihan ${PT.ago(st.last.date)}` : 'Belum ada sesi';
     return `<a class="ccard" href="#/klien/${c.id}">
       ${avatar(c)}
       <div class="cc-main">
-        <div class="cc-top"><b>${esc(c.name)}</b>${c.goal ? `<span class="pill">${esc(c.goal)}</span>` : ''}</div>
-        <div class="cc-sub">${[age ? age + ' th' : '', c.type, prog ? prog.name : 'Belum ada program'].filter(Boolean).map(esc).join(' · ')}</div>
-        <div class="cc-meta"><span class="dot ${dot}"></span>${st.last ? `Latihan ${PT.ago(st.last.date)}` : 'Belum ada sesi'}${tl ? `<span class="sep">·</span><span class="lift">${esc(shortName(tl.name))} <b>${setTxt(tl.best)}</b></span>` : ''}${st.pkgLeft !== null ? `<span class="sep">·</span><span class="${st.pkgLow ? 'amber' : ''}">Paket sisa ${Math.max(0, st.pkgLeft)}</span>` : ''}</div>
+        <div class="cc-top"><b>${esc(c.name)}</b></div>
+        <p class="cc-last">${esc(recent)}</p>
       </div>
       ${icon('chev', 'chev')}
     </a>`;
@@ -588,7 +631,7 @@
     return `${progressCard(c)}<section class="card">
       <div class="sec-h"><h3>Berat badan</h3><button class="btn sm primary" data-act="measure-new" data-id="${c.id}">${icon('plus')}Ukur</button></div>
       ${ms.length >= 2 ? lineChart(ms.map(m => ({ x: PT.parse(m.date).getTime(), y: m.weight, label: PT.fmtDate(m.date, false) })))
-        : `<p class="muted small">${ms.length ? 'Tambah 1 pengukuran lagi buat lihat grafik.' : 'Belum ada data. Catat berat & ukuran badan klien secara rutin (mis. tiap 2 minggu).'}</p>`}
+        : `<p class="muted small">${ms.length ? 'Tambah 1 pengukuran lagi buat lihat grafik.' : 'Belum ada data. Catat berat & ukuran badan klien secara rutin.'}</p>`}
     </section>
     ${ms.length ? `<section class="card"><div class="sec-h"><h3>Riwayat pengukuran</h3></div>
       <div class="table-wrap"><table class="tbl"><thead><tr><th>Tanggal</th><th>Berat</th><th>Body fat</th><th>Pinggang</th><th>Lengan</th><th>Paha</th><th></th></tr></thead><tbody>
@@ -676,15 +719,15 @@
   }
 
   /* ---------- form klien ---------- */
-  const pick = (name, opts, val) => `<div class="pick" data-pick="${name}"><input type="hidden" name="${name}" value="${esc(val || '')}">${opts.map(o => `<button type="button" class="chip ${o[0] === val ? 'on' : ''}" data-v="${esc(o[0])}">${esc(o[1])}</button>`).join('')}</div>`;
+  const pick = (name, opts, val) => `<div class="pick" data-pick="${name}"><input type="hidden" name="${name}" value="${esc(val || '')}">${opts.map(o => `<button type="button" class="chip ${o[0] === val ? 'on' : ''}" aria-pressed="${o[0] === val}" data-v="${esc(o[0])}">${esc(o[1])}</button>`).join('')}</div>`;
   function openClientForm(id) {
     const c = id ? PT.client(id) : null, C = PT.CONFIG;
     const v = c || { gender: 'L', perWeek: 3, startDate: PT.today(), type: C.types[0], level: C.levels[0] };
     const st = c ? PT.status(c) : null;
     const m = modal(`${mhead(c ? 'Edit klien' : 'Klien baru', c ? esc(c.name) : 'Isi yang penting dulu — sisanya bisa dilengkapi nanti.')}
       <form class="mbody form" id="cform" autocomplete="off">
-        <div class="field"><label>Nama lengkap *</label><input name="name" required value="${esc(v.name || '')}" placeholder="mis. Andi Pratama"></div>
-        <div class="field"><label>No. WhatsApp <small>buat kirim laporan</small></label><input name="phone" type="tel" inputmode="tel" value="${esc(v.phone || '')}" placeholder="0812xxxxxxx"></div>
+        <div class="field"><label>Nama lengkap *</label><input name="name" required value="${esc(v.name || '')}"></div>
+        <div class="field"><label>No. WhatsApp <small>buat kirim laporan</small></label><input name="phone" type="tel" inputmode="tel" value="${esc(v.phone || '')}" ></div>
         <div class="field"><label>Jenis kelamin</label>${pick('gender', [['L', 'Laki-laki'], ['P', 'Perempuan']], v.gender)}</div>
         <div class="row3">
           <div class="field"><label>Umur</label><input name="age" type="number" inputmode="numeric" min="5" max="99" value="${c && PT.age(c) ? PT.age(c) : ''}" placeholder="tahun"></div>
@@ -700,8 +743,8 @@
             : `<div class="field"><label>Target latihan</label><select name="perWeek">${[1, 2, 3, 4, 5, 6, 7].map(n => `<option value="${n}" ${+v.perWeek === n ? 'selected' : ''}>${n}× / minggu</option>`).join('')}</select></div>`}
         </div>
         <div class="field"><label>Program latihan</label><select name="programId"><option value="">— Belum pakai program —</option>${PT.S.programs.map(p => `<option value="${p.id}" ${v.programId === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>
-        <div class="field"><label>Paket sesi <small>${c && c.pkgTotal ? `sisa ${Math.max(0, st.pkgLeft)} · ganti angka = paket baru mulai hari ini` : 'opsional, mis. 12 sesi'}</small></label><input name="pkgTotal" type="number" inputmode="numeric" min="0" value="${v.pkgTotal || ''}" placeholder="jumlah sesi"></div>
-        <div class="field"><label>Catatan <small>cedera, kondisi kesehatan, preferensi</small></label><textarea name="notes" rows="3" placeholder="mis. Lutut kiri pernah cedera, hindari lompat">${esc(v.notes || '')}</textarea></div>
+        <div class="field"><label>Paket sesi <small>${c && c.pkgTotal ? `sisa ${Math.max(0, st.pkgLeft)} · ganti angka = paket baru mulai hari ini` : 'opsional'}</small></label><input name="pkgTotal" type="number" inputmode="numeric" min="0" value="${v.pkgTotal || ''}" placeholder="jumlah sesi"></div>
+        <div class="field"><label>Catatan <small>cedera, kondisi kesehatan, preferensi</small></label><textarea name="notes" rows="3">${esc(v.notes || '')}</textarea></div>
         ${c ? `<label class="switch"><input type="checkbox" name="active" ${c.active ? 'checked' : ''}><span></span>Klien aktif</label>` : ''}
       </form>
       <div class="mfoot">${c ? `<button class="btn danger" data-del aria-label="Hapus klien">${icon('trash')}</button>` : ''}<button class="btn" data-close>Batal</button><button class="btn primary" type="submit" form="cform">${c ? 'Simpan' : 'Tambah klien'}</button></div>`, { cls: 'tall' });
@@ -753,7 +796,7 @@
     $('#mform', m.el).onsubmit = e => {
       e.preventDefault();
       const d = Object.fromEntries(new FormData(e.target));
-      if (!num(d.weight)) { toast('Isi berat badan dulu (mis. 62,5)', 'err'); return; }
+      if (!num(d.weight)) { toast('Isi berat badan dulu', 'err'); return; }
       const opt = k => String(d[k] || '').trim() === '' ? null : num(d[k]);
       PT.addMeasure({ clientId: cid, date: d.date || PT.today(), weight: num(d.weight), bodyFat: opt('bodyFat'), waist: opt('waist'), arm: opt('arm'), thigh: opt('thigh') });
       m.close(); UI.ctab[cid] = 'tubuh'; refresh(); toast('Pengukuran disimpan');
@@ -826,7 +869,7 @@
       </div>
       <div id="logEx"></div>
       <button class="btn block dashed" data-act="log-addex">${icon('plus')}Tambah gerakan</button>
-      <div class="field log-notes"><label>Catatan sesi <small>opsional</small></label><textarea data-lf="notes" rows="2" placeholder="mis. Energi bagus, lutut aman, next naikin squat">${esc(D.notes || '')}</textarea></div>
+      <div class="field log-notes"><label>Catatan sesi <small>opsional</small></label><textarea data-lf="notes" rows="2">${esc(D.notes || '')}</textarea></div>
       <section class="card ppics" id="logPh">${photoSlots()}</section>
       <div class="savebar"><div class="sb-sum" id="logSum"></div><button class="btn primary" data-act="log-save">${icon('check')}Simpan sesi</button></div>`, { focus: true });
     paintLog(); paintRest();
@@ -1013,8 +1056,10 @@
     if (PH_BUSY.size) { toast('Tunggu sebentar — foto masih diproses', 'err'); return; }
     const prs = PT.detectPRs(D.clientId, exercises, D.id);
     const photos = (D.photos || []).map(p => ({ id: p.id, pose: p.pose }));
-    (D.origPhotos || []).filter(id => !photos.some(p => p.id === id)).forEach(id => Photos.remove(id));
+    try {
     PT.saveSession({ id: D.id || undefined, clientId: D.clientId, date: D.date, programId: D.programId, dayName: D.dayName, notes: String(D.notes || '').trim(), exercises, photos });
+    } catch (e) { toast(e.message, 'err'); return; }
+    (D.origPhotos || []).filter(id => !photos.some(p => p.id === id)).forEach(id => Photos.remove(id));
     clearTimeout(draftT);
     PT.S.draft = null; PT.save();
     const cid = D.clientId; D = null;
@@ -1028,7 +1073,7 @@
     let g = 'all', q = '';
     const chips = [['all', 'Semua'], ['mine', 'Buatanku']].concat(GROUPS.slice(1));
     const m = modal(`${mhead('Tambah gerakan', `${LIB.length} gerakan siap pakai · bisa bikin sendiri`)}
-      <label class="search pk-search">${icon('search')}<input id="pkq" type="search" placeholder="Cari gerakan (mis. bench, squat)…" autocomplete="off"></label>
+      <label class="search pk-search">${icon('search')}<input id="pkq" type="search" placeholder="Cari gerakan…" autocomplete="off"></label>
       <div class="chips pk-groups">${chips.map(([k, l]) => `<button class="chip ${k === 'all' ? 'on' : ''}" data-g="${k}">${l}</button>`).join('')}</div>
       <div class="pk-list" id="pkl"></div>`, { cls: 'tall' });
     const item = e => `<button class="pk-item" data-pk="${esc(e.name)}">${thumb(e.name)}<span><b>${esc(e.name)}${e.custom ? ' <em class="mine">Buatanmu</em>' : ''}</b><small>${esc(groupLabel(e.group))}${e.equipment ? ' · ' + esc(e.equipment) : ''}</small></span></button>`;
@@ -1072,10 +1117,10 @@
     const m = modal(`${mhead(ex ? 'Edit gerakan' : 'Gerakan baru', 'Foto & catatan ini muncul tiap kamu catat sesi')}
       <form class="mbody form" id="xform" autocomplete="off">
         <div id="xph">${photoPicker(photo, 'Foto mesin / gerakan')}</div>
-        <div class="field"><label>Nama gerakan *</label><input name="name" required maxlength="80" value="${esc(v.name)}" placeholder="mis. Hack Squat (mesin di gym)"></div>
+        <div class="field"><label>Nama gerakan *</label><input name="name" required maxlength="80" value="${esc(v.name)}"></div>
         <div class="field"><label>Otot utama</label>${pick('group', CGROUPS, v.group)}</div>
         <div class="field"><label>Alat</label>${pick('equipment', EQUIPS.map(x => [x, x]), v.equipment)}</div>
-        <div class="field"><label>Catatan <small>setting mesin, posisi, tempo, tips</small></label><textarea name="notes" rows="4" maxlength="1000" placeholder="mis. Kursi angka 4, sandaran 2. Turun 3 detik, jangan kunci lutut di atas.">${esc(v.notes)}</textarea></div>
+        <div class="field"><label>Catatan <small>setting mesin, posisi, tempo, tips</small></label><textarea name="notes" rows="4" maxlength="1000">${esc(v.notes)}</textarea></div>
       </form>
       <div class="mfoot">${ex ? `<button class="btn danger" data-xdel aria-label="Hapus gerakan">${icon('trash')}</button>` : ''}<button class="btn" data-close>Batal</button><button class="btn primary" type="submit" form="xform">Simpan gerakan</button></div>`,
       { cls: 'tall', onClose: () => { if (fresh && !saved) Photos.remove(fresh); } });
@@ -1164,8 +1209,8 @@
         <div class="fh-t"><h2>${P.id ? 'Edit program' : 'Program baru'}</h2><p>${P.id ? esc(P.name) : 'Template latihan'}</p></div>
         <button class="btn primary sm" data-act="prog-save">Simpan</button></div>
       <section class="card form">
-        <div class="field"><label>Nama program *</label><input data-pf="name" value="${esc(P.name)}" placeholder="mis. Upper / Lower 4×"></div>
-        <div class="field"><label>Deskripsi singkat</label><input data-pf="desc" value="${esc(P.desc || '')}" placeholder="mis. 4× seminggu · naik otot"></div>
+        <div class="field"><label>Nama program *</label><input data-pf="name" value="${esc(P.name)}"></div>
+        <div class="field"><label>Deskripsi singkat</label><input data-pf="desc" value="${esc(P.desc || '')}"></div>
       </section>
       <div id="pdays"></div>
       <button class="btn block dashed" data-act="pday-add">${icon('plus')}Tambah hari latihan</button>
@@ -1176,7 +1221,7 @@
   }
   function paintPDays() {
     $('#pdays').innerHTML = P.days.map((d, di) => `<section class="card pday">
-      <div class="pday-h"><span class="pday-n">${di + 1}</span><input data-pf="dayname" data-d="${di}" value="${esc(d.name)}" placeholder="Nama hari (mis. Upper A)" aria-label="Nama hari">
+      <div class="pday-h"><span class="pday-n">${di + 1}</span><input data-pf="dayname" data-d="${di}" value="${esc(d.name)}" placeholder="Nama hari" aria-label="Nama hari">
         <button class="iconbtn xs" data-act="pday-del" data-d="${di}" aria-label="Hapus hari">${icon('trash')}</button></div>
       ${d.exercises.length ? '<div class="pex-h"><span class="c1">Set</span><span class="c2"></span><span class="c3">Reps</span></div>' : ''}
       ${d.exercises.map((e, xi) => `<div class="pex">${thumb(e.name, 'sm')}<span class="pex-name">${esc(e.name)}</span>
@@ -1192,7 +1237,7 @@
   /* ============================================================
      LAPORAN PDF
      ============================================================ */
-  const defaultNotes = c => `Kerja bagus bulan ini, ${firstName(c.name)}! Konsistensi kamu kelihatan dari angka-angka di laporan ini.\n\nFokus bulan depan:\n- \n- `;
+  const defaultNotes = () => '';
   function reportPreview(R) {
     const prevLbl = R.vs;
     const dS = R.cur.sessions - R.prev.sessions;
@@ -1283,7 +1328,7 @@
       </div>
       <section class="card">
         <div class="sec-h"><h3>Pengingat langganan</h3></div>
-        <p class="muted small" style="margin-bottom:12px">Kamu diingatkan di aplikasi mulai H-${C.remindDays} sebelum langganan habis, dan saat sudah habis. Aktifkan notifikasi biar muncul juga di perangkat ini.</p>
+        <p class="muted small" style="margin-bottom:12px">Kamu diingatkan di aplikasi mulai H-${C.remindDays} sebelum langganan habis, dan saat sudah habis. Notifikasi perangkat bekerja saat aplikasi masih terbuka; pengingat saat aplikasi ditutup belum tersedia.</p>
         <label class="switch"><input type="checkbox" id="notifT" ${a.notif ? 'checked' : ''}><span></span>Notifikasi di perangkat ini</label>
       </section>
       <section class="card">
@@ -1293,16 +1338,16 @@
       </section>
       <section class="card">
         <div class="sec-h"><h3>Data</h3></div>
-        <p class="muted small">Data tersimpan di perangkat ini. Rutin backup biar aman kalau ganti HP atau hapus data browser.</p>
+        <p class="muted small">Backup JSON berisi catatan latihan, program, dan pengukuran. File foto tidak ikut di dalamnya. Simpan foto asli secara terpisah sebelum ganti HP atau menghapus data browser.</p>
         <div class="btnrow"><button class="btn sm" data-act="backup">${icon('download')}Backup data</button>
-          <label class="btn sm">${icon('upload')}Pulihkan<input type="file" accept="application/json,.json" id="restoreF" hidden></label>
-          ${PT.S.clients.some(c => c.demo) ? '<button class="btn sm ghost" data-act="demo-del">Hapus contoh klien</button>' : ''}</div>
+          <button class="btn sm" data-act="restore">${icon('upload')}Pulihkan</button><input type="file" accept="application/json,.json" id="restoreF" aria-label="Pilih backup JSON" hidden>
+        </div>
       </section>
       ${DEV ? `<details class="card devtools"><summary>Alat uji langganan <small>(hanya muncul dengan ?dev)</small></summary>
         <div class="btnrow"><button class="btn sm" data-sim="trial2">Trial sisa 2 hari</button><button class="btn sm" data-sim="paid5">Berbayar sisa 5 hari</button>
           <button class="btn sm" data-sim="expired">Langganan habis</button><button class="btn sm" data-sim="reset">Reset trial</button></div></details>` : ''}
       <section class="card">
-        <div class="sec-h"><h3>Akun login</h3>${Cloud.enabled ? '<span class="pill ok">Tersimpan di server</span>' : '<span class="pill warn">Mode lokal</span>'}</div>
+        <div class="sec-h"><h3>Akun login</h3>${Cloud.enabled ? '<span class="pill ok">Akun cloud</span>' : '<span class="pill warn">Mode lokal</span>'}</div>
         <div class="kv two">${kv('Email', esc(Cloud.user ? Cloud.user.email : '—'))}${kv('Sinkron', Cloud.enabled ? 'Otomatis' : 'Hanya perangkat ini')}</div>
         ${Cloud.enabled ? '' : `<div class="note">${icon('alert')}<p>Server belum disambungkan: akun & data hanya tersimpan di perangkat ini. Rutin <b>Backup data</b> dulu ya.</p></div>`}
         <div class="btnrow"><button class="btn sm" data-act="password">${icon('lock')}Ganti password</button></div>
@@ -1417,8 +1462,8 @@
       <form class="form" id="coForm" autocomplete="on" onsubmit="return false">
         <p class="sub-h" style="margin-bottom:10px">Data pembayaran</p>
         <div class="field"><label>Nama</label><input name="name" value="${esc(F.name)}" autocomplete="name" placeholder="Nama kamu"></div>
-        <div class="field"><label>Email <small>${Cloud.enabled ? 'email akun kamu' : 'bukti bayar dikirim ke sini'}</small></label><input name="email" type="email" inputmode="email" value="${esc(Cloud.enabled ? Cloud.user.email : F.email)}" autocomplete="email" placeholder="nama@email.com"${Cloud.enabled ? ' readonly' : ''}></div>
-        <div class="field"><label>No. WhatsApp</label><input name="phone" type="tel" inputmode="tel" value="${esc(F.phone)}" autocomplete="tel" placeholder="0812xxxxxxx"></div>
+        <div class="field"><label>Email <small>${Cloud.enabled ? 'email akun kamu' : 'bukti bayar dikirim ke sini'}</small></label><input name="email" type="email" inputmode="email" value="${esc(Cloud.enabled ? Cloud.user.email : F.email)}" autocomplete="email" ${Cloud.enabled ? ' readonly' : ''}></div>
+        <div class="field"><label>No. WhatsApp</label><input name="phone" type="tel" inputmode="tel" value="${esc(F.phone)}" autocomplete="tel" ></div>
       </form>
       <div><p class="sub-h" style="margin-bottom:10px">Bayar pakai</p><div class="methods" id="coMethods"><div class="paying" style="padding:14px"><div class="spinner" style="margin-bottom:0"></div></div></div></div>
       ${errMsg ? `<div class="note">${icon('alert')}<p>${esc(errMsg)}</p></div>` : ''}
@@ -1693,17 +1738,17 @@
     },
 
     'acc-edit': () => openAccountForm(),
+    'restore': () => $('#restoreF').click(),
+    'save-retry': () => { if (PT.save()) toast('Data tersimpan di perangkat'); },
+    'sync-retry': () => { dirty = true; pushNow(); },
     'backup': () => {
       const blob = new Blob([PT.exportJSON()], { type: 'application/json' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `bodimentor-pt-backup-${PT.today()}.json`;
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
       toast('File backup diunduh');
     },
-    'demo-del': async () => {
-      if (!(await confirmBox('Hapus contoh klien?', 'Klien contoh beserta sesi & pengukurannya dihapus. Klien kamu sendiri aman.', 'Hapus', true))) return;
-      PT.removeDemo(); refresh(); toast('Contoh klien dihapus');
-    },
     'logout': async () => {
+      if (PT.storageError) { toast('Simpan ulang atau backup dulu sebelum keluar agar perubahan tidak hilang.', 'err'); return; }
       if (!(await confirmBox('Keluar dari akun?', Cloud.enabled ? 'Data kamu tetap aman tersimpan di server.' : 'Data tetap tersimpan di perangkat ini.', 'Keluar'))) return;
       await pushNow();
       await Cloud.signOut();
@@ -1732,7 +1777,7 @@
     const pk = e.target.closest('.pick .chip');
     if (pk) {
       const box = pk.closest('.pick');
-      $$('.chip', box).forEach(b => b.classList.toggle('on', b === pk));
+      $$('.chip', box).forEach(b => { b.classList.toggle('on', b === pk); b.setAttribute('aria-pressed', String(b === pk)); });
       $('input[type=hidden]', box).value = pk.dataset.v;
       return;
     }
@@ -1804,11 +1849,14 @@
       try { new Notification('Pengingat Bodimentor PT aktif', { body: 'Kamu dikabari sebelum langganan habis.', icon: '/app/assets/icon-192.png' }); } catch (_) { }
     }
     if (t.id === 'restoreF' && t.files && t.files[0]) {
-      const txt = await t.files[0].text();
-      t.value = '';
-      if (!(await confirmBox('Pulihkan data dari backup?', 'Data di perangkat ini akan diganti dengan isi file backup.', 'Pulihkan'))) return;
-      try { PT.importJSON(txt); location.hash = '#/klien'; route(); toast('Data berhasil dipulihkan'); }
-      catch (err) { toast('File backup tidak valid', 'err'); }
+      const file = t.files[0]; t.value = '';
+      if (file.size > 20 * 1024 * 1024) { toast('Backup terlalu besar. Maksimal 20 MB.', 'err'); return; }
+      try {
+        const txt = await file.text(), data = PT.validateBackup(txt);
+        const detail = `${data.clients.length} klien, ${data.sessions.length} sesi, ${data.programs.length} program. Catatan latihan saat ini akan diganti; draft sesi dikosongkan. Akun dan langganan tetap. Foto tidak ikut dipulihkan dari JSON.`;
+        if (!(await confirmBox('Pulihkan catatan latihan?', detail, 'Pulihkan'))) return;
+        PT.importJSON(txt); location.hash = '#/klien'; route(); toast('Catatan latihan berhasil dipulihkan');
+      } catch (err) { toast(err.message || 'File backup tidak valid', 'err'); }
     }
   });
 

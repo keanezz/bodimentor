@@ -734,3 +734,37 @@ button.sn:active { transform: scale(.9); }
 .restbar .rb-t small { display: block; font-size: 12px; color: var(--ink-2); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .restbar .rb-btn { height: 40px; min-width: 44px; padding: 0 10px; border-radius: 13px; font-size: 14px; font-weight: 800; background: rgba(255, 255, 255, .1); border: 1px solid var(--stroke); }
 .restbar .rb-btn.skip { background: rgba(255, 255, 255, .9); color: #06121A; border-color: transparent; }
+
+/* bodimentorGPT — calm glass: stable contrast on every screen */
+:root { --bg:#080F15; --ink-2:#C1CFD8; --ink-3:#9DB0BF; --frost:blur(22px) saturate(125%); --stroke:rgba(176,205,220,.16); }
+body::before { opacity:.2; animation:none; will-change:auto; }
+body::after { opacity:.025; }
+.card,.ccard { background:linear-gradient(135deg,rgba(25,39,49,.96),rgba(15,26,36,.96)); }
+.topbar,.tabbar,.focus-head,.savebar { background:rgba(10,20,29,.93); }
+.modal { background:rgba(16,29,40,.98); }
+.chero,.subcard,.onb-card { background:linear-gradient(135deg,rgba(24,44,55,.96),rgba(14,27,36,.97)); }
+.chero::before,.subcard::before { opacity:.28; }
+.field input,.field select,.field textarea { background:rgba(6,15,23,.8); }
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible { outline:2px solid #79DBED; outline-offset:3px; }
+.btn.sm,.iconbtn { min-height:44px; }.iconbtn { min-width:44px; }
+.mbody { overscroll-behavior:contain; }
+body.modal-open { overflow:hidden; }
+@media(max-width:700px) { input,select,textarea,.field input,.field select,.field textarea { font-size:16px; }.modal { max-height:92dvh; }.ccard { padding:17px; } }
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
+
+/* Coach App follow-up: honest save status and quiet mobile feedback */
+.sync-line { color:var(--ink-3); font-size:11px; margin:0 0 14px; letter-spacing:.015em; }
+.data-status { border:1px solid #d3ad5966; background:#30291d; padding:16px; border-radius:18px; margin-bottom:18px; color:#F6E3B9; }
+.data-status.bad { background:#321e24; border-color:#cc697c77; color:#FFE1E6; }
+.data-status b { font-size:14px; }.data-status p { font-size:13px; line-height:1.5; margin:5px 0 10px; }
+.boot-error { max-width:460px; margin:15vh auto; padding:24px; }.boot-error h1 { font-size:28px; }.boot-error p { color:var(--ink-2); margin:20px 0; }
+
+.resume-card { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:18px; margin:0 0 18px; border:1px solid #449aa077; border-radius:20px; background:linear-gradient(115deg,#18333b,#13232d); }.resume-card b { display:block; font-size:17px; }.resume-card p { color:var(--ink-2); font-size:12px; margin-top:4px; }.resume-card .eyebrow { font-size:10px; }.resume-card .btn { flex-shrink:0; }
+
+/* Simple client list: identity + recency. Training details live in the profile. */
+.ccard { min-height:104px; gap:16px; padding:22px 20px; }
+.cc-top { display:block; overflow:visible; }
+.cc-top b { display:block; font-size:20px; line-height:1.35; white-space:normal; overflow-wrap:anywhere; }
+.cc-last { font-size:16px; line-height:1.5; color:var(--ink-2); margin-top:8px; }
+.clist { gap:14px; }
+@media(max-width:700px) { .ccard { padding:20px 18px; }.attn-who small { font-size:15px; line-height:1.5; }.field label { font-size:15px; }.field label small { display:block; font-size:14px; }.field label { flex-wrap:wrap; }.ccard .avatar { flex-shrink:0; } }
