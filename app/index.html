@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <script>if(/github\.io$/.test(location.hostname))location.replace('https://bodimentor.id'+(location.pathname.replace(/^\/bodimentor/,'').replace(/\/$/,''))+location.search+location.hash)</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Bodimentor PT — Aplikasi Personal Trainer</title>
+  <meta name="description" content="Aplikasi untuk personal trainer: catat beban tiap klien, pantau progres, dan kirim laporan PDF ke WhatsApp.">
+  <meta name="theme-color" content="#04070B">
+  <link rel="icon" type="image/png" href="/app/assets/favicon.png">
+  <link rel="apple-touch-icon" href="/app/assets/apple-touch-icon.png">
+  <link rel="manifest" href="/app/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bodimentor PT">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/app/pt.css?v=4">
+</head>
+<body>
+  <div id="app"></div>
+  <div id="modals"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Library gerakan dipakai bersama dengan app Bodimentor -->
+  <script src="/app/js/exercises.js" defer></script>
+  <script src="/app/js/exercises2.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1/dist/umd/supabase.js" defer></script>
+  <script src="/app/config.js?v=3" defer></script>
+  <script src="/app/store.js?v=3" defer></script>
+  <script src="/app/seed.js?v=3" defer></script>
+  <script src="/app/report.js?v=3" defer></script>
+  <script src="/app/scalev.js?v=3" defer></script>
+  <script src="/app/photos.js?v=3" defer></script>
+  <script src="/app/cloud.js?v=3" defer></script>
+  <script src="/app/app.js?v=3" defer></script>
+</body>
+</html>
