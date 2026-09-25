@@ -6,5 +6,5 @@
    ============================================================ */
 window.PT_CONFIG = {
   supabaseUrl: 'https://syecoospddyqwwgfuxul.supabase.co',
-  supabaseAnonKey: '',  // "anon public" key
+  supabaseAnonKey: 'sb_publishable_U2h9RwBTdoEPKwJpOn31wA_G-cUTt8T',  // publishable key (publik)
 };

@@ -367,3 +367,9 @@ h3 { font-size: 19px; font-weight: 800; letter-spacing: -0.025em; line-height: 1
 .foot nav { align-content: start; }
 .prices .amt { flex-wrap: wrap; column-gap: 8px; row-gap: 2px; }
 .prices .amt span { white-space: nowrap; }
+
+/* ============ halaman /coach ============ */
+.mini { position: relative; }
+.newtag { position: absolute; top: 18px; right: 18px; font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 5px 10px; border-radius: 999px; background: var(--grad); color: #03131A; }
+.prices.one { grid-template-columns: 1fr; max-width: 460px; }
+.foot .ebook img { object-fit: cover; object-position: top; }

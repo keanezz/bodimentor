@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <script>if(/github\.io$/.test(location.hostname))location.replace('https://bodimentor.id'+(location.pathname.replace(/^\/bodimentor/,'').replace(/\/$/,''))+location.search+location.hash)</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Bodimentor PT — Coach App untuk Personal Trainer</title>
+  <meta name="description" content="Coach App untuk personal trainer: catat beban tiap klien dalam hitungan detik, pantau progres bulan ke bulan, foto before–after, dan kirim laporan PDF ke WhatsApp klien. Coba gratis 7 hari.">
+  <meta name="theme-color" content="#04070B">
+  <link rel="canonical" href="https://bodimentor.id/coach">
+  <link rel="icon" type="image/png" href="/home/img/favicon.png">
+  <link rel="apple-touch-icon" href="/home/img/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Bodimentor">
+  <meta property="og:url" content="https://bodimentor.id/coach">
+  <meta property="og:title" content="Bodimentor PT — Coach App untuk Personal Trainer">
+  <meta property="og:description" content="Catat sesi, pantau progres klien, kirim laporan PDF + foto before–after ke WhatsApp. Coba gratis 7 hari.">
+  <meta property="og:image" content="https://bodimentor.id/home/img/og-coach.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/home/home.css?v=6">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"/></symbol>
+  <symbol id="i-login" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24"><path d="M3.5 20.5l1.3-4.1A8.5 8.5 0 1 1 8 19.3z"/><path d="M9.2 8.6c.3-.4.7-.5 1-.3l.9 2-.7 1a5.8 5.8 0 0 0 2.6 2.6l1-.7 2 .9c.2.3.1.7-.3 1-1.7 1.2-6.2-2.1-6.5-6.5z"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></symbol>
+  <symbol id="i-trend-down" viewBox="0 0 24 24"><path d="m22 17-8.5-8.5-5 5L2 7"/><path d="M16 17h6v-6"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M2 6h4M2 10h4M2 14h4M2 18h4M15 2v20"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
+  <symbol id="i-dumbbell" viewBox="0 0 24 24"><path d="m6.5 6.5 11 11M21 21l-1-1M3 3l1 1M18 22l4-4M2 6l4-4M3 10l7-7M14 21l7-7"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-ticket" viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2M13 17v2M13 11v2"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+</svg>
+
+<header class="hdr" id="hdr">
+  <nav class="nav" aria-label="Utama">
+    <a class="brand" href="/" aria-label="Bodimentor — beranda"><img src="/home/img/mark.webp" width="160" height="85" alt="">Bodimentor <b class="gt">PT</b></a>
+    <div class="nav-links">
+      <a href="#baru">Fitur baru</a>
+      <a href="#fitur">Fitur</a>
+      <a href="#harga">Harga</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <a class="btn sm" href="/app#/masuk" id="navCoach"><svg class="ic"><use href="#i-login"/></svg><span>Masuk</span></a>
+    <a class="btn sm primary try" href="/app#/daftar">Coba gratis</a>
+  </nav>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap">
+      <span class="eyebrow"><i></i>Coach App untuk personal trainer</span>
+      <h1>Catat tiap sesi. <span class="gt">Kirim progresnya</span> ke WhatsApp.</h1>
+      <p class="lead">Bodimentor PT mencatat beban setiap klien dalam hitungan detik, merangkum progres bulan ke bulan, lalu membuat laporan PDF lengkap dengan foto before–after — siap dikirim ke WhatsApp klien.</p>
+      <div class="cta-row">
+        <a class="btn lg primary" href="/app#/daftar">Coba gratis 7 hari <svg class="ic"><use href="#i-arrow"/></svg></a>
+        <a class="btn lg" href="#fitur">Lihat fiturnya</a>
+      </div>
+      <p class="fine">Tanpa kartu kredit · Setelah trial <b>Rp 99.000/bulan</b></p>
+
+      <div class="shots">
+        <div class="phone side l"><img src="/home/img/app-detail.webp" width="780" height="1688" alt="Halaman detail klien: statistik sesi, berat badan, dan sisa paket" loading="lazy"></div>
+        <div class="phone mid"><img src="/home/img/app-klien.webp" width="780" height="1688" alt="Daftar klien di Bodimentor PT dengan klien yang perlu perhatian" fetchpriority="high"></div>
+        <div class="phone side r"><img src="/home/img/app-sesi.webp" width="780" height="1688" alt="Mencatat sesi: set, beban, dan repetisi" loading="lazy"></div>
+        <div class="chip c1"><span class="ci"><svg class="ic"><use href="#i-wa"/></svg></span><div><b>Laporan terkirim</b><span>ke WhatsApp klien</span></div></div>
+        <div class="chip c2"><span class="ci"><svg class="ic"><use href="#i-up"/></svg></span><div><b>+14,6% kekuatan</b><span>vs bulan lalu</span></div></div>
+      </div>
+
+      <div class="proof rv">
+        <div><b class="gt">400+</b><span>gerakan siap pakai</span></div>
+        <div><b class="gt">1 tap</b><span>laporan PDF ke WA</span></div>
+        <div><b class="gt">∞</b><span>klien tanpa batas</span></div>
+        <div><b class="gt">7 hari</b><span>coba gratis</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FITUR BARU -->
+  <section class="sec" id="baru">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <span class="eyebrow">Baru</span>
+        <h2>Tiga fitur baru <span class="gt">yang paling diminta.</span></h2>
+      </div>
+      <div class="grid3">
+        <div class="card mini rv"><span class="newtag">Baru</span><span class="mi"><svg class="ic"><use href="#i-camera"/></svg></span><h3>Foto progres → before–after</h3><p>Foto klien setelah sesi (depan, samping, belakang). Foto paling awal dan terbaru otomatis jadi halaman before–after di laporan PDF.</p></div>
+        <div class="card mini rv"><span class="newtag">Baru</span><span class="mi"><svg class="ic"><use href="#i-dumbbell"/></svg></span><h3>Gerakan buatan sendiri</h3><p>Mesin khusus di gym kamu tidak ada di daftar? Buat sendiri, lengkap dengan foto mesin/gerakan dan catatan setting.</p></div>
+        <div class="card mini rv"><span class="newtag">Baru</span><span class="mi"><svg class="ic"><use href="#i-cloud"/></svg></span><h3>Akun cloud</h3><p>Masuk dengan email &amp; password. Data dan foto klien tersimpan aman di server — ganti HP tinggal masuk lagi. Lupa password? Reset lewat email.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MASALAH -->
+  <section class="sec" id="masalah">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <span class="eyebrow">Kenapa perlu</span>
+        <h2>Klien bayar untuk hasil. <span class="gt">Tunjukkan hasilnya.</span></h2>
+        <p class="lead">Kebanyakan PT masih mengandalkan buku catatan, Notes di HP, atau ingatan. Akibatnya:</p>
+      </div>
+      <div class="pains">
+        <div class="card pain rv"><span class="pi"><svg class="ic"><use href="#i-note"/></svg></span><div><h3>Lupa beban terakhir</h3><p>Scroll catatan di tengah sesi sementara klien menunggu — atau menebak dan mengulang beban yang sama.</p></div></div>
+        <div class="card pain rv"><span class="pi"><svg class="ic"><use href="#i-trend-down"/></svg></span><div><h3>Progres tidak terlihat</h3><p>Klien merasa jalan di tempat karena tidak ada angka yang bisa dilihat, lalu berhenti perpanjang paket.</p></div></div>
+        <div class="card pain rv"><span class="pi"><svg class="ic"><use href="#i-clock"/></svg></span><div><h3>Rekap makan waktu</h3><p>Bikin laporan bulanan manual untuk belasan klien? Hampir tidak ada PT yang sempat.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FITUR -->
+  <section class="sec" id="fitur">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <span class="eyebrow">Fitur</span>
+        <h2>Semua yang kamu butuhkan <span class="gt">di lantai gym.</span></h2>
+        <p class="lead">Dibuat untuk dipakai satu tangan di HP, di sela-sela set.</p>
+      </div>
+
+      <div class="feat">
+        <div class="txt rv">
+          <span class="num">01 · Catat sesi</span>
+          <h3>Catat sesi secepat klien selesai satu set.</h3>
+          <p>Pilih gerakan, beban dan repetisi sesi sebelumnya langsung muncul. Isi kg &amp; reps, tap centang — selesai.</p>
+          <ul class="ticks">
+            <li><svg class="ic"><use href="#i-check"/></svg>400+ gerakan lengkap dengan gambar</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Beban terakhir &amp; target tampil di setiap gerakan</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Mulai dari program yang sudah kamu susun</li>
+          </ul>
+        </div>
+        <div class="stage rv"><div class="phone"><img src="/home/img/app-sesi.webp" width="780" height="1688" alt="Layar catat sesi dengan beban sebelumnya" loading="lazy"></div></div>
+      </div>
+
+      <div class="feat flip">
+        <div class="txt rv">
+          <span class="num">02 · Profil klien</span>
+          <h3>Semua tentang klien, dalam satu layar.</h3>
+          <p>Umur, tujuan, jenis latihan, program aktif, sisa paket, berat badan, sampai riwayat setiap sesi — tidak perlu lagi tanya ulang.</p>
+          <ul class="ticks">
+            <li><svg class="ic"><use href="#i-check"/></svg>Beban tertinggi (PR) per gerakan</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Ukuran tubuh: berat, lemak, lingkar pinggang</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Chat klien lewat WhatsApp langsung dari app</li>
+          </ul>
+        </div>
+        <div class="stage g rv"><div class="phone"><img src="/home/img/app-detail.webp" width="780" height="1688" alt="Profil klien dengan ringkasan progres" loading="lazy"></div></div>
+      </div>
+
+      <div class="feat" id="laporan">
+        <div class="txt rv">
+          <span class="num">03 · Laporan PDF</span>
+          <h3>Laporan yang bikin klien betah perpanjang.</h3>
+          <p>Satu tap, app membuat laporan progres: bulan ini dibanding bulan lalu, tren berat badan, volume latihan, dan kenaikan kekuatan. Unduh PDF atau kirim langsung ke WhatsApp klien.</p>
+          <ul class="ticks">
+            <li><svg class="ic"><use href="#i-check"/></svg>Perbandingan bulan ke bulan yang adil (tanggal yang sama)</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Grafik berat badan &amp; volume latihan</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Halaman foto before–after otomatis</li>
+          </ul>
+        </div>
+        <div class="stage rv">
+          <div class="paper a"><img src="/home/img/laporan-1.webp" width="1000" height="1414" alt="Contoh laporan progres halaman 1: ringkasan dan perbandingan bulanan" loading="lazy"></div>
+          <div class="paper b"><img src="/home/img/laporan-3.webp" width="1000" height="1414" alt="Contoh laporan progres halaman 3: foto before dan after" loading="lazy"></div>
+          <span class="wa-tag"><svg class="ic"><use href="#i-wa"/></svg>Kirim ke WA</span>
+        </div>
+      </div>
+
+      <div class="feat flip">
+        <div class="txt rv">
+          <span class="num">04 · Foto progres</span>
+          <h3>Foto setelah sesi, jadi before–after otomatis.</h3>
+          <p>Ambil foto depan, samping, atau belakang setiap selesai sesi. App memilih foto paling awal dan paling baru dengan pose yang sama, lalu memasangnya berdampingan di laporan.</p>
+          <ul class="ticks">
+            <li><svg class="ic"><use href="#i-check"/></svg>Galeri progres per tanggal</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Berat badan tercantum di tiap foto</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Foto tersimpan privat di akunmu</li>
+          </ul>
+        </div>
+        <div class="stage g rv"><div class="phone"><img src="/home/img/app-foto.webp" width="780" height="1688" alt="Foto progres before dan after di tab Tubuh" loading="lazy"></div></div>
+      </div>
+
+      <div class="grid3 more">
+        <div class="card mini rv"><span class="mi"><svg class="ic"><use href="#i-bell"/></svg></span><h3>Klien yang perlu perhatian</h3><p>Klien yang lama tidak latihan atau paketnya hampir habis muncul paling atas, lengkap dengan tombol chat WA.</p></div>
+        <div class="card mini rv"><span class="mi"><svg class="ic"><use href="#i-list"/></svg></span><h3>Program latihan</h3><p>Susun Push/Pull/Legs, Upper/Lower, atau Full Body sekali, lalu pakai ulang untuk klien lain.</p></div>
+        <div class="card mini rv"><span class="mi"><svg class="ic"><use href="#i-ticket"/></svg></span><h3>Paket sesi</h3><p>Sisa sesi tiap klien terhitung otomatis setiap kamu mencatat latihan.</p></div>
+        <div class="card mini rv"><span class="mi"><svg class="ic"><use href="#i-file"/></svg></span><h3>Riwayat lengkap</h3><p>Setiap sesi tersimpan per tanggal: gerakan, set, beban, dan total volume — bisa dibuka kapan saja.</p></div>
+        <div class="card mini rv"><span class="mi"><svg class="ic"><use href="#i-phone"/></svg></span><h3>Tanpa install</h3><p>Buka di browser HP mana pun, lalu tambahkan ke layar utama — rasanya seperti aplikasi biasa.</p></div>
+        <div class="card mini rv"><span class="mi"><svg class="ic"><use href="#i-bell"/></svg></span><h3>Pengingat langganan</h3><p>Kamu diingatkan di aplikasi sebelum masa aktif habis — tidak ada tagihan otomatis.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CARA KERJA -->
+  <section class="sec" id="cara">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <span class="eyebrow">Cara kerja</span>
+        <h2>Mulai dalam <span class="gt">3 menit.</span></h2>
+      </div>
+      <div class="steps">
+        <div class="card step rv"><div class="n gt">01</div><h3>Buat akun</h3><p>Daftar dengan email dan password. Langsung dapat trial gratis 7 hari, semua fitur terbuka.</p></div>
+        <div class="card step rv"><div class="n gt">02</div><h3>Tambah klien &amp; catat sesi</h3><p>Isi data klien sekali, lalu catat setiap sesi langsung di lantai gym.</p></div>
+        <div class="card step rv"><div class="n gt">03</div><h3>Kirim laporan</h3><p>Di akhir bulan, buat laporan PDF dan kirim ke WhatsApp klien dengan satu tap.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HARGA -->
+  <section class="sec" id="harga">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <span class="eyebrow">Harga</span>
+        <h2>Satu harga. <span class="gt">Semua fitur.</span></h2>
+        <p class="lead">Cukup satu klien yang perpanjang paket, langganan sebulan sudah balik modal.</p>
+      </div>
+      <div class="prices one">
+        <div class="price rv">
+          <span class="tag"><svg class="ic" style="width:15px;height:15px"><use href="#i-check"/></svg>Gratis 7 hari pertama</span>
+          <h3>Bodimentor PT</h3>
+          <div class="amt"><b>Rp99.000</b><span>/bulan</span></div>
+          <p class="sub">Klien tanpa batas. Tanpa biaya tersembunyi.</p>
+          <ul class="ticks">
+            <li><svg class="ic"><use href="#i-check"/></svg>Catat sesi &amp; program tanpa batas</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Laporan PDF + kirim ke WhatsApp</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Foto progres before–after</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Gerakan buatan sendiri dengan foto &amp; catatan</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Data tersimpan di cloud, bisa dibuka di HP mana pun</li>
+          </ul>
+          <a class="btn lg primary" href="/app#/daftar">Coba gratis 7 hari <svg class="ic"><use href="#i-arrow"/></svg></a>
+          <div class="pay"><span>QRIS</span><span>BCA</span><span>BNI</span><span>BRI</span><span>Mandiri</span><span>Permata</span><span>+9 bank lain</span></div>
+          <p class="note">Bayar per bulan dari dalam app. Tidak ada tagihan otomatis.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="sec" id="faq">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <span class="eyebrow">FAQ</span>
+        <h2>Pertanyaan yang <span class="gt">sering muncul.</span></h2>
+      </div>
+      <div class="faq">
+        <details class="rv"><summary>Perlu kartu kredit untuk trial?<svg class="ic"><use href="#i-plus"/></svg></summary><p>Tidak. Cukup daftar dengan email dan password, semua fitur langsung terbuka selama 7 hari.</p></details>
+        <details class="rv"><summary>Apa yang terjadi setelah trial habis?<svg class="ic"><use href="#i-plus"/></svg></summary><p>Data klien kamu tetap aman dan tetap bisa dilihat. Untuk lanjut mencatat sesi dan mengirim laporan, aktifkan langganan Rp99.000/bulan dari menu Akun.</p></details>
+        <details class="rv"><summary>Bagaimana cara bayarnya?<svg class="ic"><use href="#i-plus"/></svg></summary><p>Langsung dari dalam aplikasi pakai QRIS (semua e-wallet &amp; m-banking) atau transfer Virtual Account. Langganan aktif otomatis setelah pembayaran diterima.</p></details>
+        <details class="rv"><summary>Apakah langganan diperpanjang otomatis?<svg class="ic"><use href="#i-plus"/></svg></summary><p>Tidak ada tagihan otomatis. Kamu diingatkan di aplikasi beberapa hari sebelum masa aktif habis, dan kalau perpanjang lebih awal, sisa harinya tetap disambung.</p></details>
+        <details class="rv"><summary>Data dan foto klien aman?<svg class="ic"><use href="#i-plus"/></svg></summary><p>Data dan foto tersimpan di akun kamu dan hanya bisa dibuka setelah kamu masuk. Foto progres disimpan privat — tidak ada yang bisa melihatnya selain kamu.</p></details>
+        <details class="rv"><summary>Apakah klien saya perlu install aplikasi?<svg class="ic"><use href="#i-plus"/></svg></summary><p>Tidak. Aplikasi ini hanya untuk trainer. Klien menerima laporan PDF lewat WhatsApp dan bisa langsung membukanya di HP.</p></details>
+        <details class="rv"><summary>Bagaimana kalau gerakannya tidak ada di daftar?<svg class="ic"><use href="#i-plus"/></svg></summary><p>Buat gerakan sendiri: beri nama, pilih otot dan alat, unggah foto mesin atau gerakannya, dan tulis catatan setting. Gerakan itu langsung bisa dipakai di sesi dan program.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="final rv">
+      <h2>Mulai rapikan progres klienmu <span class="gt">hari ini.</span></h2>
+      <p class="lead">Gratis 7 hari. Tanpa kartu kredit. Batalkan kapan saja — cukup tidak diperpanjang.</p>
+      <div class="cta-row" style="animation:none">
+        <a class="btn lg primary" href="/app#/daftar">Coba gratis 7 hari <svg class="ic"><use href="#i-arrow"/></svg></a>
+        <a class="btn lg" href="/app#/masuk">Masuk akun</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div>
+      <a class="brand" href="/"><img src="/home/img/mark.webp" width="160" height="85" alt="">Bodimentor <b class="gt">PT</b></a>
+      <p style="margin-top:10px">Coach App untuk personal trainer.<br>© 2026 Bodimentor. Train. Eat. Transform.</p>
+    </div>
+    <div style="display:grid;gap:18px">
+      <nav aria-label="Footer">
+        <a href="/app#/masuk">Masuk</a>
+        <a href="/app#/daftar">Daftar</a>
+        <a href="#harga">Harga</a>
+        <a href="/">Bodimentor</a>
+        <a href="https://instagram.com/kimizz" target="_blank" rel="noopener">Instagram</a>
+      </nav>
+      <a class="ebook" href="/ebook"><img src="/home/img/ebook-cover.webp" width="46" height="46" alt="" loading="lazy"><div><b>Bukan trainer?</b><span>Lihat ebook Bentuk Badan, Ubah Hidup</span></div><svg class="ic"><use href="#i-chev"/></svg></a>
+    </div>
+  </div>
+</footer>
+
+<script src="/home/home.js?v=4" defer></script>
+</body>
+</html>

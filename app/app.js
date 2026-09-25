@@ -1152,6 +1152,7 @@
      ============================================================ */
   function renderAccount() {
     const a = PT.S.account, s = PT.sub(), C = PT.CONFIG;
+    const life = s.status === 'active' && s.daysLeft > 3650;   // akun tim (paid_until 2099)
     const pct = s.status === 'trial' ? Math.min(100, Math.max(4, (1 - (s.end - Date.now()) / (C.trialDays * PT.DAY)) * 100)) : 0;
     const pill = s.status === 'trial' ? '<span class="pill info">Trial</span>' : s.status === 'active' ? `<span class="pill ${s.daysLeft <= C.bannerDays ? 'warn' : 'ok'}">Aktif</span>` : '<span class="pill off">Habis</span>';
     const kv = (l, v) => `<div><small>${l}</small><b>${v}</b></div>`;
@@ -1160,10 +1161,10 @@
       <div class="grid2">
         <section class="card subcard">
           <div class="sec-h"><h3>Langganan</h3>${pill}</div>
-          <p class="sub-big">${s.status === 'trial' ? `Trial gratis · <b>${sisa(s.daysLeft)}</b>` : s.status === 'active' ? `Paket ${s.plan ? s.plan.name : ''} · <b>${sisa(s.daysLeft)}</b>` : '<b>Langganan habis</b>'}</p>
-          <p class="muted small">${s.status === 'expired' ? `Berakhir ${PT.fmtTs(s.end)}. Data kamu tetap aman.` : `Berlaku sampai ${PT.fmtTs(s.end)}`}</p>
+          <p class="sub-big">${life ? 'Pro · <b>seumur hidup</b>' : s.status === 'trial' ? `Trial gratis · <b>${sisa(s.daysLeft)}</b>` : s.status === 'active' ? `Paket ${s.plan ? s.plan.name : ''} · <b>${sisa(s.daysLeft)}</b>` : '<b>Langganan habis</b>'}</p>
+          <p class="muted small">${life ? 'Akun tim — tidak perlu perpanjang.' : s.status === 'expired' ? `Berakhir ${PT.fmtTs(s.end)}. Data kamu tetap aman.` : `Berlaku sampai ${PT.fmtTs(s.end)}`}</p>
           ${s.status === 'trial' ? `<div class="bar"><i style="width:${pct.toFixed(0)}%"></i></div>` : ''}
-          <button class="btn ${s.status === 'active' && s.daysLeft > C.bannerDays ? 'soft' : 'primary'} block" data-act="checkout">${s.status === 'trial' ? 'Langganan' : s.status === 'active' ? 'Perpanjang' : 'Aktifkan lagi'} · ${rp(C.plans[0].price)}/bulan</button>
+          ${life ? '' : `<button class="btn ${s.status === 'active' && s.daysLeft > C.bannerDays ? 'soft' : 'primary'} block" data-act="checkout">${s.status === 'trial' ? 'Langganan' : s.status === 'active' ? 'Perpanjang' : 'Aktifkan lagi'} · ${rp(C.plans[0].price)}/bulan</button>`}
         </section>
         <section class="card">
           <div class="sec-h"><h3>Profil coach</h3><button class="btn sm ghost" data-act="acc-edit">${icon('edit')}Edit</button></div>

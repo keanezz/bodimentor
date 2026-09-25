@@ -19,14 +19,18 @@
     const loc = JSON.parse(localStorage.getItem('bmpt.local-auth') || 'null');
     signedIn = !!((sb && (sb.access_token || (sb.currentSession && sb.currentSession.access_token))) || (loc && loc.session));
   } catch (e) { }
-  if (signedIn) {
-    const a = document.getElementById('navCoach');
-    a.href = 'app'; a.querySelector('small').textContent = 'Kamu sudah masuk — buka aplikasi';
+  const coach = document.getElementById('navCoach');
+  if (signedIn && coach) {
+    coach.href = '/app';
+    const t = coach.querySelector('small') || coach.querySelector('span');
+    t.textContent = coach.querySelector('small') ? 'Kamu sudah masuk — buka aplikasi' : 'Buka aplikasi';
   }
 
-  // Tutup menu Masuk saat klik di luar / tekan Esc
+  // Menu Masuk (website utama): tutup saat klik di luar / Esc / scroll
   const dd = document.getElementById('loginMenu');
-  document.addEventListener('click', e => { if (dd.open && !dd.contains(e.target)) dd.open = false; });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') dd.open = false; });
-  addEventListener('scroll', () => { if (dd.open && scrollY > 40) dd.open = false; }, { passive: true });
+  if (dd) {
+    document.addEventListener('click', e => { if (dd.open && !dd.contains(e.target)) dd.open = false; });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') dd.open = false; });
+    addEventListener('scroll', () => { if (dd.open && scrollY > 40) dd.open = false; }, { passive: true });
+  }
 })();
